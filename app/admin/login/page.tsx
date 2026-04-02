@@ -91,9 +91,17 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-center text-[#475569] text-xs mt-8">
-          Not yet initialized? Run the setup command first.
-        </p>
+        <div className="mt-8 pt-6 border-t border-[rgba(255,255,255,0.05)] text-center">
+          <p className="text-[#94a3b8] text-sm mb-4">
+            Don't have an account yet?
+          </p>
+          <Link 
+            href="/register" 
+            className="btn-secondary w-full justify-center py-3 text-sm"
+          >
+            Create an Account
+          </Link>
+        </div>
       </div>
     </div>
   );

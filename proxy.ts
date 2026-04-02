@@ -13,5 +13,5 @@ export function proxy(request: NextRequest, event: Parameters<typeof authMiddlew
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/submit"],
+  matcher: ["/admin/:path*"],
 };

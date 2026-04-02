@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { blogCategories } from '@/lib/data';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 
 export default function SubmitPage() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
 
     const [formData, setFormData] = useState({
         title: '',
@@ -32,6 +32,46 @@ export default function SubmitPage() {
         // In production, this would POST to an API
         setSubmitted(true);
     };
+
+    if (status === 'loading') {
+        return (
+            <div className="min-h-screen pt-24 pb-20 px-4 flex items-center justify-center">
+                <div className="w-10 h-10 border-4 border-[rgba(0,212,255,0.2)] border-t-[#00d4ff] rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
+    if (status === 'unauthenticated') {
+        return (
+            <div className="min-h-[80vh] flex items-center justify-center px-4">
+                <div className="glass-card text-center max-w-lg p-10 mt-12 w-full animate-slide-up" style={{ transform: 'none' }}>
+                    <div className="w-20 h-20 rounded-full bg-[rgba(0,212,255,0.08)] flex items-center justify-center text-3xl mx-auto mb-6">
+                        🔐
+                    </div>
+                    <h2 className="text-3xl font-black text-white mb-4">
+                        Sign In <span className="gradient-text">Required</span>
+                    </h2>
+                    <p className="text-[#94a3b8] mb-8 leading-relaxed">
+                        To maintain the high quality of our editorial community, you must be signed in to submit a blog post.
+                    </p>
+                    <div className="flex flex-col gap-4">
+                        <button 
+                            onClick={() => signIn()} 
+                            className="btn-primary w-full py-4 text-lg justify-center font-bold"
+                        >
+                            Sign In
+                        </button>
+                        <a 
+                            href="/register" 
+                            className="btn-secondary w-full py-4 text-lg justify-center font-bold"
+                        >
+                            Create an Account
+                        </a>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     if (submitted) {
         return (
