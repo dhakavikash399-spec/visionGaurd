@@ -1,9 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { blogCategories } from '@/lib/data';
+import { useSession } from 'next-auth/react';
 
 export default function SubmitPage() {
+    const { data: session } = useSession();
+
     const [formData, setFormData] = useState({
         title: '',
         category: '',
@@ -12,6 +15,16 @@ export default function SubmitPage() {
         authorName: '',
         authorEmail: '',
     });
+
+    useEffect(() => {
+        if (session?.user) {
+            setFormData(prev => ({
+                ...prev,
+                authorName: session.user?.name || prev.authorName,
+                authorEmail: session.user?.email || prev.authorEmail
+            }));
+        }
+    }, [session]);
     const [submitted, setSubmitted] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
