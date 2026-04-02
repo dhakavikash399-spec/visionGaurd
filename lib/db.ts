@@ -1,15 +1,19 @@
 import { Pool } from 'pg';
 
 if (!process.env.NEON_DATABASE_URL) {
-  throw new Error('NEON_DATABASE_URL is not defined in environment variables');
+  console.warn('NEON_DATABASE_URL is not defined in environment variables');
 }
 
-const pool = new Pool({
-  connectionString: process.env.NEON_DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+const pool = new Pool(
+  process.env.NEON_DATABASE_URL 
+    ? {
+        connectionString: process.env.NEON_DATABASE_URL,
+        ssl: {
+          rejectUnauthorized: false
+        }
+      }
+    : {}
+);
 
 /**
  * Standard SQL tagged template literal for 'pg'
