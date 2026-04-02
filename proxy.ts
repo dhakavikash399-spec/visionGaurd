@@ -1,4 +1,4 @@
-import { withAuth } from "next-auth/middleware";
+import { withAuth, NextRequestWithAuth } from "next-auth/middleware";
 import type { NextRequest } from "next/server";
 
 const authMiddleware = withAuth({
@@ -9,7 +9,7 @@ const authMiddleware = withAuth({
 
 // Next.js 16: must export a named `proxy` function (middleware is deprecated)
 export function proxy(request: NextRequest, event: Parameters<typeof authMiddleware>[1]) {
-  return authMiddleware(request, event);
+  return authMiddleware(request as NextRequestWithAuth, event);
 }
 
 export const config = {
