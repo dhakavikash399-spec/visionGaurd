@@ -1,0 +1,11 @@
+{
+    "buildCommand": "npm run build",
+    "installCommand": "npm install",
+    "framework": "nextjs",
+    "crons": [
+        {
+            "path": "/api/cron/sync-db",
+            "schedule": "0 5 * * *"
+        }
+    ]
+}

@@ -1,0 +1,330 @@
+
+import { notFound } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Metadata } from 'next';
+import { destinations } from '@/lib/data';
+import { fetchBlogsByDestination } from '@/lib/db/queries';
+import BackToTop from '@/components/BackToTop';
+import { DestinationBlogGrid } from '@/components/DestinationBlogGrid';
+
+// 1. Generate Static Paths for SEO (SSG)
+export async function generateStaticParams() {
+    return destinations.map((dest) => ({
+        slug: dest.id,
+    }));
+}
+
+// Revalidate interval (configurable via env)
+export const revalidate = parseInt(process.env.REVALIDATE_SECONDS || '60', 10);
+
+type Props = {
+    params: { slug: string };
+};
+
+// 2. Dynamic SEO Metadata
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+    const destination = destinations.find((d) => d.id === params.slug);
+    if (!destination) return { title: 'Destination Not Found' };
+
+    const pagePath = `/destinations/${params.slug}/`;
+
+    return {
+        title: `${destination.name_en} Travel Guide - Best Places & Blogs | VisionGuard`,
+        description: destination.description_en,
+        alternates: {
+            canonical: pagePath,
+        },
+        openGraph: {
+            title: `${destination.name_en} Travel Guide – VisionGuard`,
+            description: destination.description_en,
+            url: pagePath,
+            siteName: 'VisionGuard',
+            locale: 'en_IN',
+            type: 'website',
+            images: [
+                {
+                    url: destination.coverImage,
+                    width: 1200,
+                    height: 630,
+                    alt: `${destination.name_en} Travel Guide`,
+                },
+            ],
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: `${destination.name_en} Travel Guide – VisionGuard`,
+            description: destination.description_en,
+            images: [destination.coverImage],
+            site: '@VisionGuard',
+        },
+    };
+}
+
+// 3. The Details Page
+export default async function DestinationDetailsPage({ params }: Props) {
+    const destination = destinations.find((d) => d.id === params.slug);
+
+    if (!destination) {
+        notFound();
+    }
+
+    // Fetch blogs dynamically for this destination
+    const blogs = await fetchBlogsByDestination(params.slug);
+
+    // Identify "Core Guides" for Cluster SEO (Itineraries, Best Time, etc.)
+    const coreGuides = blogs.filter(b => {
+        const title = b.title_en.toLowerCase();
+        return title.includes('itinerary') ||
+            title.includes('best time') ||
+            title.includes('how to reach') ||
+            title.includes('packing list');
+    }).slice(0, 3);
+
+    // Tourist Destination structured data for rich search results — Enhanced for SEO + AEO + GEO
+    const touristDestinationJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'TouristDestination',
+        name: destination.name_en,
+        description: destination.description_en,
+        image: destination.coverImage.startsWith('http')
+            ? destination.coverImage
+            : `https://www.VisionGuard.com${destination.coverImage}`,
+        url: `https://www.VisionGuard.com/destinations/${params.slug}/`,
+        containedInPlace: {
+            '@type': 'State',
+            name: 'Rajasthan',
+            containedInPlace: {
+                '@type': 'Country',
+                name: 'India',
+            },
+        },
+        touristType: ['Cultural Tourist', 'Heritage Tourist', 'Adventure Tourist'],
+        includesAttraction: destination.attractions.map((attr) => ({
+            '@type': 'TouristAttraction',
+            name: attr,
+            isAccessibleForFree: false,
+        })),
+        publicAccess: true,
+        // GEO: Language and content context for AI
+        inLanguage: 'en-IN',
+        // GEO: Connect to parent website for topical authority
+        isPartOf: {
+            '@type': 'WebSite',
+            name: 'VisionGuard',
+            url: 'https://www.VisionGuard.com'
+        },
+        // AEO: Speakable — tells voice assistants which text to read aloud
+        speakable: {
+            '@type': 'SpeakableSpecification',
+            cssSelector: ['h1', 'meta[name="description"]']
+        },
+    };
+
+    // Breadcrumb structured data
+    const breadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: 'https://www.VisionGuard.com/',
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Destinations',
+                item: 'https://www.VisionGuard.com/destinations/',
+            },
+            {
+                '@type': 'ListItem',
+                position: 3,
+                name: destination.name_en,
+                item: `https://www.VisionGuard.com/destinations/${params.slug}/`,
+            },
+        ],
+    };
+
+    return (
+        <main className="min-h-screen pt-28">
+            {/* Structured Data for SEO */}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(touristDestinationJsonLd) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+            />
+            {/* Top Breadcrumbs */}
+            <div className="max-w-7xl mx-auto px-4 mb-6">
+                <nav className="flex items-center gap-2 text-sm text-gray-500 font-medium overflow-x-auto whitespace-nowrap pb-2 md:pb-0 no-scrollbar">
+                    <Link href="/" className="hover:text-royal-blue transition-colors flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        Home
+                    </Link>
+                    <span className="text-gray-300">/</span>
+                    <Link href="/destinations/" className="hover:text-royal-blue transition-colors">Destinations</Link>
+                    <span className="text-gray-300">/</span>
+                    <span className="text-royal-blue font-bold capitalize">{destination.name_en}</span>
+                </nav>
+            </div>
+
+            {/* HERo SECTION */}
+            <div className="relative h-[50vh] md:h-[60vh] w-full max-w-7xl mx-auto rounded-3xl overflow-hidden shadow-2xl">
+                <Image
+                    src={destination.coverImage}
+                    alt={destination.name_en}
+                    fill
+                    priority
+                    className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-0 left-0 w-full p-6 md:p-12 text-white">
+                    <div className="max-w-7xl mx-auto">
+                        <span className="inline-block px-4 py-1 bg-desert-gold text-white text-[10px] md:text-xs font-bold uppercase rounded-full mb-4 shadow-lg tracking-wider">
+                            DESTINATION GUIDE
+                        </span>
+                        <h1 className="text-4xl md:text-7xl font-bold mb-3 font-outfit drop-shadow-md">{destination.name_en}</h1>
+                        <p className="text-lg md:text-2xl opacity-90 font-light max-w-2xl drop-shadow-sm">{destination.tagline_en}</p>
+
+                        {destination.imageCredits && (
+                            <div className="absolute bottom-4 right-6 text-[10px] md:text-xs text-white/40 hover:text-white/80 transition-colors z-10">
+                                Image Source: <a href={destination.imageCredits.url} target="_blank" rel="nofollow noopener noreferrer" className="underline">{destination.imageCredits.name}</a>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* QUICK INFO */}
+            <section className="bg-sand/30 border-b border-sand mt-12 py-10">
+                <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-sand">
+                        <span className="block text-[10px] uppercase text-desert-gold font-bold tracking-widest mb-2">Best Time</span>
+                        <span className="font-bold text-royal-blue text-xl">{destination.bestTime}</span>
+                    </div>
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-sand">
+                        <span className="block text-[10px] uppercase text-desert-gold font-bold tracking-widest mb-2">Region</span>
+                        <span className="font-bold text-royal-blue text-xl">Rajasthan</span>
+                    </div>
+                    <div className="col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-sand">
+                        <span className="block text-[10px] uppercase text-desert-gold font-bold tracking-widest mb-2">Top Attractions</span>
+                        <div className="flex flex-wrap gap-2">
+                            {destination.attractions.map(attr => (
+                                <span key={attr} className="px-3 py-1 bg-sand/50 rounded-full text-xs font-bold text-royal-blue">
+                                    {attr}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* CLUSTER SEO: CORE GUIDES SECTION */}
+            {coreGuides.length > 0 && (
+                <section className="py-12 px-4 max-w-7xl mx-auto border-b border-sand">
+                    <div className="flex items-center gap-3 mb-8">
+                        <div className="w-10 h-10 bg-royal-blue rounded-xl flex items-center justify-center text-white shadow-lg shadow-royal-blue/20">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold text-royal-blue font-outfit uppercase tracking-tight">Essential {destination.name_en} Guides</h2>
+                            <p className="text-sm text-gray-500">Must-read articles to plan your perfect trip.</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {coreGuides.map(guide => (
+                            <Link
+                                key={guide.id}
+                                href={`/blogs/${guide.slug}/`}
+                                className="group flex items-center gap-4 bg-white p-4 rounded-2xl border border-sand hover:border-desert-gold hover:shadow-xl hover:shadow-desert-gold/5 transition-all"
+                            >
+                                <div className="relative w-20 h-20 flex-shrink-0 rounded-xl overflow-hidden shadow-sm">
+                                    <Image
+                                        src={guide.coverImage}
+                                        alt={guide.title_en}
+                                        fill
+                                        className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                    />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h3 className="font-bold text-royal-blue leading-tight group-hover:text-desert-gold transition-colors line-clamp-2">
+                                        {guide.title_en}
+                                    </h3>
+                                    <div className="flex items-center gap-2 mt-1 text-[10px] font-bold text-desert-gold uppercase tracking-wider">
+                                        <span>Read Guide</span>
+                                        <svg className="w-3 h-3 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {/* BLOGS LISTING (The Silo Content) */}
+            <section className="py-20 px-4 max-w-7xl mx-auto">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-12">
+                    <div>
+                        <h2 className="text-3xl md:text-4xl font-bold text-royal-blue font-outfit">
+                            Recent Stories from {destination.name_en}
+                        </h2>
+                        <p className="text-gray-500 mt-2">Authentic travel experiences shared by our community.</p>
+                    </div>
+                    <span className="self-start md:self-auto text-sm bg-desert-gold/10 text-desert-gold font-bold px-4 py-2 rounded-full border border-desert-gold/20">
+                        {blogs.length} Articles Found
+                    </span>
+                </div>
+
+                {blogs.length > 0 ? (
+                    <DestinationBlogGrid blogs={blogs} />
+                ) : (
+                    <div className="text-center py-24 bg-white rounded-[2rem] border-2 border-dashed border-sand/50">
+                        <div className="w-20 h-20 bg-sand/30 rounded-full flex items-center justify-center mx-auto mb-6 text-4xl">✍️</div>
+                        <p className="text-gray-500 text-xl font-medium">No stories written for {destination.name_en} yet.</p>
+                        <p className="text-gray-400 mt-2 mb-8">Be the first to share your journey with the world.</p>
+                        <Link href="/submit" className="inline-block px-8 py-4 bg-royal-blue text-white font-bold rounded-full hover:bg-deep-maroon shadow-lg transition-all transform hover:-translate-y-1">
+                            Share Your Story
+                        </Link>
+                    </div>
+                )}
+            </section>
+
+            {/* Bottom Navigation */}
+            <div className="max-w-7xl mx-auto px-4 pb-20">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-12 border-t border-sand">
+                    <Link
+                        href="/destinations/"
+                        className="inline-flex items-center gap-2 text-royal-blue font-bold hover:text-desert-gold transition-colors"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 0118 0z" />
+                        </svg>
+                        Back to All Destinations
+                    </Link>
+
+                    <nav className="flex items-center gap-2 text-xs text-gray-400 font-medium italic">
+                        <Link href="/" className="hover:text-royal-blue">Home</Link>
+                        <span>/</span>
+                        <Link href="/destinations/" className="hover:text-royal-blue">Destinations</Link>
+                        <span>/</span>
+                        <span className="capitalize">{destination.name_en}</span>
+                    </nav>
+                </div>
+            </div>
+
+            {/* Back to Top */}
+            <BackToTop />
+        </main>
+    );
+}

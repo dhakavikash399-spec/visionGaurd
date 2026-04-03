@@ -2,6 +2,11 @@
 
 import Link from 'next/link';
 import type { BlogPost } from '@/lib/data';
+import { useState, useEffect } from 'react';
+
+import LikeButton from './LikeButton';
+import CommentButton from './CommentButton';
+import ShareButton from './ShareButton';
 
 interface BlogCardProps {
     blog: BlogPost;
@@ -9,74 +14,95 @@ interface BlogCardProps {
 }
 
 export default function BlogCard({ blog, priority = false }: BlogCardProps) {
-    const date = new Date(blog.publishedAt).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric',
-    });
+    const title = blog.title_en;
+    const excerpt = blog.excerpt_en;
 
-    const categoryColors: Record<string, string> = {
-        reviews: 'from-[#f59e0b] to-[#ef4444]',
-        guides: 'from-[#00d4ff] to-[#3b82f6]',
-        installation: 'from-[#10b981] to-[#06b6d4]',
-        'smart-home': 'from-[#8b5cf6] to-[#ec4899]',
-        'security-tips': 'from-[#ef4444] to-[#f97316]',
-        comparisons: 'from-[#3b82f6] to-[#8b5cf6]',
-        news: 'from-[#06b6d4] to-[#10b981]',
-        diy: 'from-[#f97316] to-[#f59e0b]',
-    };
+    const date = new Date(blog.publishedAt || blog.created_at || new Date()).toLocaleDateString(
+        'en-US',
+        { month: 'short', day: 'numeric', year: 'numeric' }
+    );
 
     return (
-        <div className="group glass-card overflow-hidden flex flex-col h-full">
-            <Link href={`/blogs/${blog.slug}`} className="block">
-                {/* Image */}
-                <div className="h-52 relative overflow-hidden rounded-t-[1rem]">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#0f172a] to-[#1e293b]">
-                        <div className="absolute inset-0 bg-gradient-to-br from-[rgba(0,212,255,0.15)] to-[rgba(16,185,129,0.1)] flex items-center justify-center">
-                            <svg className="w-16 h-16 text-[rgba(0,212,255,0.3)] group-hover:text-[rgba(0,212,255,0.5)] transition-colors duration-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                        </div>
-                    </div>
+        <div className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 relative flex flex-col h-full border border-gray-100">
+            {/* Main Navigation Link (Absolute overlay excluding bottom bar) */}
+            <Link
+                href={`/blogs/${blog.slug || blog.id}/`}
+                className="absolute inset-0 z-0"
+                aria-label={`Read ${title}`}
+            />
 
-                    {/* Category Badge */}
+            {/* Content Container */}
+            <div className="flex-1 flex flex-col z-10 pointer-events-none">
+                <div className="h-56 relative overflow-hidden">
+                    {/* Direct img tag for SEO — Google indexes Cloudinary URLs directly */}
+                    <img
+                        src={blog.coverImage}
+                        alt={title}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        loading={priority ? 'eager' : 'lazy'}
+                        {...(priority ? { fetchPriority: 'high' as any } : {})}
+                        decoding="async"
+                    />
                     <div className="absolute top-4 left-4">
-                        <span className={`px-3 py-1 bg-gradient-to-r ${categoryColors[blog.category] || 'from-[#00d4ff] to-[#10b981]'} text-white text-[10px] font-bold uppercase rounded-full shadow-lg`}>
-                            {blog.category.replace(/-/g, ' ')}
+                        <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-royal-blue text-[10px] font-bold uppercase rounded-full shadow-sm">
+                            {blog.category}
                         </span>
                     </div>
                 </div>
 
-                {/* Content */}
                 <div className="p-5 flex-1 flex flex-col">
-                    <div className="flex items-center gap-2 text-[#64748b] text-xs mb-3">
+                    <div className="flex items-center gap-2 text-gray-400 text-xs mb-3">
                         <span>{date}</span>
-                        <span className="w-1 h-1 rounded-full bg-[#334155]" />
-                        <span>{blog.readTime}</span>
+                        <span>•</span>
+                        <span>{blog.readTime || '5 min'}</span>
                     </div>
 
-                    <h3 className="text-lg font-bold mb-3 text-white line-clamp-2 leading-tight group-hover:text-[#00d4ff] transition-colors duration-300">
-                        {blog.title}
+                    <h3 className="text-xl font-bold mb-3 text-gray-900 line-clamp-2 leading-tight group-hover:text-royal-blue transition-colors">
+                        {title}
                     </h3>
 
-                    <p className="text-[#94a3b8] text-sm line-clamp-3 mb-4 leading-relaxed">
-                        {blog.excerpt}
+                    <p className="text-gray-600 text-sm line-clamp-3 mb-4 leading-relaxed">
+                        {excerpt}
                     </p>
                 </div>
-            </Link>
+            </div>
 
-            {/* Author Bar */}
-            <div className="px-5 pb-5 pt-0 flex items-center justify-between mt-auto">
+            {/* Interaction Bar (Bottom - Clickable) */}
+            <div
+                className="relative z-20 px-5 pt-0 pb-5 flex items-center justify-between mt-auto border-t border-gray-50 bg-white pointer-events-auto"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00d4ff] to-[#10b981] flex items-center justify-center text-xs font-bold text-[#0a0e17]">
-                        {blog.author.name.charAt(0)}
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
+                        {blog.author.avatar ? (
+                            <img
+                                src={blog.author.avatar}
+                                alt={blog.author.name}
+                                width={32}
+                                height={32}
+                                className="object-cover"
+                                loading="lazy"
+                            />
+                        ) : (
+                            <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-400">
+                                {blog.author.name.charAt(0)}
+                            </div>
+                        )}
                     </div>
-                    <span className="font-medium text-[#94a3b8] text-xs">{blog.author.name}</span>
+                    <span className="font-bold text-gray-800 text-xs">{blog.author.name}</span>
                 </div>
-                <Link href={`/blogs/${blog.slug}`} className="text-[#00d4ff] text-xs font-semibold hover:text-[#10b981] transition-colors flex items-center gap-1">
-                    Read More
-                    <svg className="w-3 h-3 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </Link>
+
+                <div className="flex items-center gap-4">
+                    <LikeButton blogId={blog.id} variant="compact" />
+                    <CommentButton blogId={blog.id} slug={blog.slug} variant="compact" />
+                    <ShareButton
+                        title={title}
+                        text={excerpt || title}
+                        url={`https://VisionGuard.com/blogs/${blog.slug || blog.id}`}
+                        compact={true}
+                    />
+
+                </div>
             </div>
         </div>
     );

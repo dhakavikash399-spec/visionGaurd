@@ -1,131 +1,186 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { useSession, signOut } from 'next-auth/react';
+
 
 export default function Navbar() {
     const pathname = usePathname();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
+
     const navRef = useRef<HTMLDivElement | null>(null);
+    const { data: session } = useSession();
+    const user = session?.user;
+    const avatarUrl = user?.image || null;
+    const mounted = true; // always mounted (no language hydration overhead)
 
-    useEffect(() => {
-        const handleScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
 
+    // Close mobile menu when clicking outside
     useEffect(() => {
         if (!mobileMenuOpen) return;
+
         const handleClickOutside = (event: MouseEvent) => {
             if (!navRef.current) return;
             if (!navRef.current.contains(event.target as Node)) {
                 setMobileMenuOpen(false);
             }
         };
+
         document.addEventListener('click', handleClickOutside);
-        return () => document.removeEventListener('click', handleClickOutside);
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+        };
     }, [mobileMenuOpen]);
 
-    const isActive = (path: string) => pathname === path || pathname.startsWith(path + '/');
-
-    const navLinks = [
-        { href: '/', label: 'Home' },
-        { href: '/blogs', label: 'Blog' },
-        { href: '/products', label: 'Products' },
-        { href: '/categories', label: 'Categories' },
-        { href: '/about', label: 'About' },
-    ];
-
     return (
-        <nav
-            ref={navRef}
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-                scrolled
-                    ? 'bg-[#0a0e17]/95 backdrop-blur-xl shadow-[0_4px_30px_rgba(0,212,255,0.08)] border-b border-[rgba(0,212,255,0.1)]'
-                    : 'bg-transparent'
-            }`}
-        >
-            <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-                {/* Logo */}
-                <Link href="/" className="flex items-center gap-3 group">
-                    <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-[#00d4ff] to-[#10b981] flex items-center justify-center transition-all group-hover:shadow-[0_0_20px_rgba(0,212,255,0.4)]">
-                        <svg className="w-6 h-6 text-[#0a0e17]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                        </svg>
-                    </div>
-                    <span className="text-xl font-bold text-white">
-                        Vision<span className="gradient-text">Guard</span>
-                    </span>
-                </Link>
+        <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm transition-all duration-300">
+            <div className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-2 md:grid-cols-3 items-center">
+                {/* Logo Section - Left */}
+                <div className="flex justify-start">
+                    <Link href="/" className="flex items-center gap-2">
+                        <Image
+                            src="/logo-sm.webp"
+                            alt="VisionGuard Logo"
+                            width={48}
+                            height={48}
+                            className="h-12 w-auto rounded-full"
+                        />
+                        <span className="text-xl font-bold text-royal-blue whitespace-nowrap">
+                            VisionGuard
+                        </span>
 
-                {/* Desktop Nav */}
-                <div className="hidden md:flex items-center gap-1">
-                    {navLinks.map((link) => (
-                        <Link
-                            key={link.href}
-                            href={link.href}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-                                isActive(link.href)
-                                    ? 'text-[#00d4ff] bg-[rgba(0,212,255,0.1)]'
-                                    : 'text-[#94a3b8] hover:text-white hover:bg-[rgba(255,255,255,0.05)]'
-                            }`}
-                        >
-                            {link.label}
-                        </Link>
-                    ))}
+                    </Link>
                 </div>
 
-                {/* Actions */}
-                <div className="flex items-center gap-3">
+                {/* Nav Links - Center (Desktop) */}
+                <div className="hidden md:flex items-center justify-center gap-6">
+                    <Link href="/" className="font-medium text-gray-600 hover:text-royal-blue transition-colors">Home</Link>
+                    <Link href="/blogs/" className="font-medium text-gray-600 hover:text-royal-blue transition-colors">Blogs</Link>
+                    <Link href="/destinations/" className="font-medium text-gray-600 hover:text-royal-blue transition-colors">Destinations</Link>
+
+
+                    <Link href="/essentials/" className="font-medium text-gray-600 hover:text-royal-blue transition-colors">Essentials</Link>
+
+                </div>
+
+                {/* Actions Section - Right */}
+                <div className="flex justify-end items-center gap-4">
+
+
+                    {mounted && user && (
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href="/my-blogs"
+                                className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-all text-sm"
+                            >
+                                {avatarUrl ? (
+                                    <div className="relative w-6 h-6 rounded-full overflow-hidden border border-white shadow-sm">
+                                        <Image
+                                            src={avatarUrl}
+                                            alt={user?.name || 'Profile photo'}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    </div>
+                                ) : null}
+                                My Blogs
+
+                            </Link>
+                            <button
+                                onClick={async () => {
+                                    await signOut({ redirect: false });
+                                    window.location.reload();
+                                }}
+                                className="hidden sm:inline-flex items-center justify-center w-9 h-9 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 transition-all"
+                                title="Logout"
+
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                            </button>
+                        </div>
+                    )}
+
                     <Link
-                        href="/submit"
-                        className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#00d4ff] to-[#10b981] text-[#0a0e17] font-bold rounded-lg text-sm shadow-lg hover:shadow-[0_0_30px_rgba(0,212,255,0.3)] hover:-translate-y-0.5 transition-all"
+                        href="/submit/"
+                        className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-desert-gold to-[#B8922F] text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm"
                     >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Write Blog
+                        Submit Blog
+
                     </Link>
 
-                    {/* Mobile Menu Toggle */}
+                    {/* Mobile Menu Button */}
                     <button
-                        className="md:hidden flex flex-col gap-1.5 p-2 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors"
+                        className="md:hidden flex flex-col gap-1.5 p-2"
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label="Toggle navigation menu"
                     >
-                        <span className={`w-6 h-0.5 bg-[#00d4ff] transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-                        <span className={`w-6 h-0.5 bg-[#00d4ff] transition-all duration-300 ${mobileMenuOpen ? 'opacity-0' : ''}`} />
-                        <span className={`w-6 h-0.5 bg-[#00d4ff] transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+                        <span className="w-6 h-0.5 bg-gray-700 transition-all"></span>
+                        <span className="w-6 h-0.5 bg-gray-700 transition-all"></span>
+                        <span className="w-6 h-0.5 bg-gray-700 transition-all"></span>
                     </button>
                 </div>
             </div>
 
-            {/* Mobile Menu */}
+            {/* Mobile Nav */}
             {mobileMenuOpen && (
-                <div className="md:hidden bg-[#0f172a]/98 backdrop-blur-xl border-t border-[rgba(0,212,255,0.1)] animate-slide-down">
-                    <div className="max-w-7xl mx-auto px-4 py-4 flex flex-col gap-1">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.href}
-                                href={link.href}
-                                onClick={() => setMobileMenuOpen(false)}
-                                className={`px-4 py-3 rounded-lg text-base font-medium transition-colors ${
-                                    isActive(link.href)
-                                        ? 'text-[#00d4ff] bg-[rgba(0,212,255,0.1)]'
-                                        : 'text-[#94a3b8] hover:text-white hover:bg-[rgba(255,255,255,0.05)]'
-                                }`}
-                            >
-                                {link.label}
-                            </Link>
-                        ))}
+                <div className="md:hidden bg-white px-4 py-4 shadow-lg">
+                    <div className="flex flex-col gap-4">
                         <Link
-                            href="/submit"
+                            href="/"
+                            className="text-lg py-2 px-4 rounded-lg hover:bg-gray-100"
                             onClick={() => setMobileMenuOpen(false)}
-                            className="mt-2 px-4 py-3 rounded-lg bg-gradient-to-r from-[#00d4ff] to-[#10b981] text-[#0a0e17] font-bold text-center text-base"
                         >
-                            Write Blog
+                            Home
+                        </Link>
+                        <Link href="/blogs/" className={`text-lg py-2 px-4 rounded-lg hover:bg-gray-100 ${pathname.startsWith('/blogs') ? 'text-royal-blue font-bold' : ''}`} onClick={() => setMobileMenuOpen(false)}>Blogs</Link>
+                        <Link href="/destinations/" className="text-lg py-2 px-4 rounded-lg hover:bg-gray-100" onClick={() => setMobileMenuOpen(false)}>Destinations</Link>
+
+
+                        <Link
+                            href="/essentials/"
+                            className="text-lg py-2 px-4 rounded-lg hover:bg-gray-100"
+                            onClick={() => setMobileMenuOpen(false)}
+                        >
+                            Essentials
+                        </Link>
+
+                        {mounted && user && (
+                            <>
+                                <Link
+                                    href="/my-blogs"
+                                    className="text-lg py-2 px-4 rounded-lg hover:bg-gray-100 font-medium text-royal-blue"
+                                    onClick={() => setMobileMenuOpen(false)}
+                                >
+                                    My Blogs
+
+                                </Link>
+                                <button
+                                    className="text-lg py-2 px-4 rounded-lg hover:bg-red-50 font-medium text-red-600 text-left flex items-center gap-2"
+                                    onClick={async () => {
+                                        await signOut({ redirect: false });
+                                        setMobileMenuOpen(false);
+                                        window.location.reload();
+                                    }}
+                                >
+                                    <span>🚪</span>
+                                    Logout
+
+                                </button>
+                            </>
+                        )}
+
+                        <Link
+                            href="/submit/"
+                            className="text-lg py-2 px-4 rounded-lg bg-desert-gold text-white text-center"
+                            onClick={() => setMobileMenuOpen(false)}
+                        >
+                            Submit Blog
+
                         </Link>
                     </div>
                 </div>

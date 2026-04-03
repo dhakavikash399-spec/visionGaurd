@@ -1,0 +1,478 @@
+'use client';
+
+import { Editor } from '@tiptap/react';
+import { useState } from 'react';
+
+interface ToolbarProps {
+    editor: Editor;
+    onImageClick: () => void;
+    onVideoClick: () => void;
+    onLinkClick: () => void;
+    onEditImageClick?: () => void;
+}
+
+const TEXT_COLORS = [
+    { name: 'Default', color: null },
+    { name: 'Black', color: '#000000' },
+    { name: 'Dark Gray', color: '#4B5563' },
+    { name: 'Red', color: '#EF4444' },
+    { name: 'Orange', color: '#F97316' },
+    { name: 'Amber', color: '#F59E0B' },
+    { name: 'Green', color: '#22C55E' },
+    { name: 'Blue', color: '#3B82F6' },
+    { name: 'Purple', color: '#8B5CF6' },
+    { name: 'Pink', color: '#EC4899' },
+];
+
+const HIGHLIGHT_COLORS = [
+    { name: 'None', color: null },
+    { name: 'Yellow', color: '#FEF08A' },
+    { name: 'Green', color: '#BBF7D0' },
+    { name: 'Blue', color: '#BFDBFE' },
+    { name: 'Pink', color: '#FBCFE8' },
+    { name: 'Orange', color: '#FED7AA' },
+];
+
+export default function Toolbar({ editor, onImageClick, onVideoClick, onLinkClick, onEditImageClick }: ToolbarProps) {
+    const [showColorPicker, setShowColorPicker] = useState(false);
+    const [showHighlightPicker, setShowHighlightPicker] = useState(false);
+
+    const ToolbarButton = ({
+        onClick,
+        isActive = false,
+        children,
+        title,
+    }: {
+        onClick: () => void;
+        isActive?: boolean;
+        children: React.ReactNode;
+        title: string;
+    }) => (
+        <button
+            type="button"
+            onClick={onClick}
+            title={title}
+            className={`p-2.5 rounded hover:bg-gray-100 active:bg-gray-200 transition-colors min-w-[36px] flex items-center justify-center ${isActive ? 'bg-gray-200 text-royal-blue' : 'text-gray-600'
+                }`}
+        >
+            {children}
+        </button>
+    );
+
+    const Divider = () => <div className="w-px h-6 bg-gray-300 mx-1"></div>;
+
+    return (
+        <div className="flex items-center gap-1 p-2 border-b border-gray-200 bg-gray-50 overflow-x-auto scrollbar-hide flex-nowrap md:flex-wrap">
+            {/* Text Formatting */}
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleBold().run()}
+                isActive={editor.isActive('bold')}
+                title="Bold (Ctrl+B)"
+            >
+                <span className="font-bold text-sm">B</span>
+            </ToolbarButton>
+
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleItalic().run()}
+                isActive={editor.isActive('italic')}
+                title="Italic (Ctrl+I)"
+            >
+                <span className="italic text-sm">I</span>
+            </ToolbarButton>
+
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleUnderline().run()}
+                isActive={editor.isActive('underline')}
+                title="Underline (Ctrl+U)"
+            >
+                <span className="underline text-sm">U</span>
+            </ToolbarButton>
+
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleStrike().run()}
+                isActive={editor.isActive('strike')}
+                title="Strikethrough"
+            >
+                <span className="line-through text-sm">S</span>
+            </ToolbarButton>
+
+            <Divider />
+
+            {/* Text Color */}
+            <div className="relative">
+                <button
+                    type="button"
+                    onClick={() => {
+                        setShowColorPicker(!showColorPicker);
+                        setShowHighlightPicker(false);
+                    }}
+                    title="Text Color"
+                    className="p-2 rounded hover:bg-gray-100 transition-colors text-gray-600 flex items-center gap-1"
+                >
+                    <span className="text-sm font-bold">A</span>
+                    <div className="w-4 h-1 bg-gradient-to-r from-red-500 via-green-500 to-blue-500 rounded"></div>
+                </button>
+                {showColorPicker && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50 grid grid-cols-5 gap-1 min-w-[150px]">
+                        {TEXT_COLORS.map((c) => (
+                            <button
+                                key={c.name}
+                                type="button"
+                                onClick={() => {
+                                    if (c.color) {
+                                        editor.chain().focus().setColor(c.color).run();
+                                    } else {
+                                        editor.chain().focus().unsetColor().run();
+                                    }
+                                    setShowColorPicker(false);
+                                }}
+                                title={c.name}
+                                className="w-8 h-8 rounded border border-gray-200 hover:scale-110 transition-transform"
+                                style={{ backgroundColor: c.color || '#ffffff' }}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Highlight Color */}
+            <div className="relative">
+                <button
+                    type="button"
+                    onClick={() => {
+                        setShowHighlightPicker(!showHighlightPicker);
+                        setShowColorPicker(false);
+                    }}
+                    title="Highlight"
+                    className="p-2 rounded hover:bg-gray-100 transition-colors text-gray-600"
+                >
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M15.243 4.515l-6.738 6.737-.707 2.121-1.04 1.041 2.828 2.829 1.04-1.041 2.122-.707 6.737-6.738-4.242-4.242zm6.364 3.535a1 1 0 010 1.414l-7.778 7.778-2.122.707-1.414 1.414a1 1 0 01-1.414 0l-4.243-4.243a1 1 0 010-1.414l1.414-1.414.707-2.121 7.778-7.778a1 1 0 011.414 0l5.657 5.657zM4 20h16v2H4z" />
+                    </svg>
+                </button>
+                {showHighlightPicker && (
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg p-2 z-50 grid grid-cols-3 gap-1 min-w-[100px]">
+                        {HIGHLIGHT_COLORS.map((c) => (
+                            <button
+                                key={c.name}
+                                type="button"
+                                onClick={() => {
+                                    if (c.color) {
+                                        editor.chain().focus().toggleHighlight({ color: c.color }).run();
+                                    } else {
+                                        editor.chain().focus().unsetHighlight().run();
+                                    }
+                                    setShowHighlightPicker(false);
+                                }}
+                                title={c.name}
+                                className="w-8 h-8 rounded border border-gray-200 hover:scale-110 transition-transform"
+                                style={{ backgroundColor: c.color || '#ffffff' }}
+                            />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            <Divider />
+
+            {/* Headings */}
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                isActive={editor.isActive('heading', { level: 1 })}
+                title="Heading 1"
+            >
+                <span className="font-bold text-sm">H1</span>
+            </ToolbarButton>
+
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                isActive={editor.isActive('heading', { level: 2 })}
+                title="Heading 2"
+            >
+                <span className="font-bold text-sm">H2</span>
+            </ToolbarButton>
+
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                isActive={editor.isActive('heading', { level: 3 })}
+                title="Heading 3"
+            >
+                <span className="font-bold text-sm">H3</span>
+            </ToolbarButton>
+
+            <Divider />
+
+            {/* Text Alignment */}
+            <ToolbarButton
+                onClick={() => editor.chain().focus().setTextAlign('left').run()}
+                isActive={editor.isActive({ textAlign: 'left' })}
+                title="Align Left"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h10M4 18h14" />
+                </svg>
+            </ToolbarButton>
+
+            <ToolbarButton
+                onClick={() => editor.chain().focus().setTextAlign('center').run()}
+                isActive={editor.isActive({ textAlign: 'center' })}
+                title="Align Center"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M7 12h10M5 18h14" />
+                </svg>
+            </ToolbarButton>
+
+            <ToolbarButton
+                onClick={() => editor.chain().focus().setTextAlign('right').run()}
+                isActive={editor.isActive({ textAlign: 'right' })}
+                title="Align Right"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M10 12h10M6 18h14" />
+                </svg>
+            </ToolbarButton>
+
+            <ToolbarButton
+                onClick={() => editor.chain().focus().setTextAlign('justify').run()}
+                isActive={editor.isActive({ textAlign: 'justify' })}
+                title="Justify"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </ToolbarButton>
+
+            <Divider />
+
+            {/* Lists */}
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleBulletList().run()}
+                isActive={editor.isActive('bulletList')}
+                title="Bullet List"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </ToolbarButton>
+
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                isActive={editor.isActive('orderedList')}
+                title="Numbered List"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
+                </svg>
+            </ToolbarButton>
+
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                isActive={editor.isActive('blockquote')}
+                title="Quote"
+            >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z" />
+                </svg>
+            </ToolbarButton>
+
+            <Divider />
+
+            {/* Sub/Superscript */}
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleSubscript().run()}
+                isActive={editor.isActive('subscript')}
+                title="Subscript"
+            >
+                <span className="text-sm">X<sub className="text-xs">2</sub></span>
+            </ToolbarButton>
+
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleSuperscript().run()}
+                isActive={editor.isActive('superscript')}
+                title="Superscript"
+            >
+                <span className="text-sm">X<sup className="text-xs">2</sup></span>
+            </ToolbarButton>
+
+            <Divider />
+
+            {/* Media */}
+            <ToolbarButton onClick={onImageClick} title="Insert Image">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                </svg>
+            </ToolbarButton>
+
+            <ToolbarButton onClick={onVideoClick} title="Insert Video (Shorts/Reels)">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+            </ToolbarButton>
+
+            {onEditImageClick && (
+                <ToolbarButton
+                    onClick={onEditImageClick}
+                    isActive={editor.isActive('image')}
+                    title="Edit Selected Image (click an image first)"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
+                    </svg>
+                </ToolbarButton>
+            )}
+
+            <ToolbarButton
+                onClick={onLinkClick}
+                isActive={editor.isActive('link')}
+                title="Insert Link"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
+                    />
+                </svg>
+            </ToolbarButton>
+
+            <Divider />
+
+            {/* Clear formatting */}
+            <ToolbarButton
+                onClick={() => editor.chain().focus().unsetAllMarks().clearNodes().run()}
+                title="Clear formatting"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M9 5h10M5 9v10" />
+                </svg>
+            </ToolbarButton>
+
+            <Divider />
+
+            {/* Undo/Redo */}
+            <ToolbarButton
+                onClick={() => editor.chain().focus().undo().run()}
+                title="Undo (Ctrl+Z)"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                </svg>
+            </ToolbarButton>
+
+            <ToolbarButton
+                onClick={() => editor.chain().focus().redo().run()}
+                title="Redo (Ctrl+Shift+Z)"
+            >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6" />
+                </svg>
+            </ToolbarButton>
+
+            <Divider />
+
+            {/* Tables */}
+            <div className="flex items-center gap-1 bg-gray-100/50 p-1 rounded-lg border border-gray-200">
+                <ToolbarButton
+                    onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: false }).run()}
+                    title="Insert Table"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M3 14h18M3 18h18M3 6h18M3 6v12M21 6v12" />
+                    </svg>
+                </ToolbarButton>
+
+                {editor.isActive('table') && (
+                    <>
+                        <div className="w-px h-4 bg-gray-300 mx-0.5"></div>
+
+                        {/* Toggle Header */}
+                        <ToolbarButton onClick={() => editor.chain().focus().toggleHeaderRow().run()} title="Toggle Header Row">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <rect x="3" y="3" width="18" height="6" rx="1" strokeWidth="2" fill="currentColor" opacity="0.2" />
+                                <rect x="3" y="3" width="18" height="18" rx="1" strokeWidth="2" />
+                                <path strokeLinecap="round" strokeWidth="2" d="M3 9h18M3 15h18" />
+                            </svg>
+                        </ToolbarButton>
+
+                        <div className="w-px h-4 bg-gray-300 mx-0.5"></div>
+
+                        {/* Row: Add Above */}
+                        <ToolbarButton onClick={() => editor.chain().focus().addRowBefore().run()} title="Add Row Above">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 5V1m0 0L9 4m3-3l3 3" />
+                                <rect x="3" y="8" width="18" height="6" rx="1" strokeWidth="1.5" />
+                                <rect x="3" y="16" width="18" height="6" rx="1" strokeWidth="1" opacity="0.4" />
+                            </svg>
+                        </ToolbarButton>
+
+                        {/* Row: Add Below */}
+                        <ToolbarButton onClick={() => editor.chain().focus().addRowAfter().run()} title="Add Row Below">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <rect x="3" y="2" width="18" height="6" rx="1" strokeWidth="1" opacity="0.4" />
+                                <rect x="3" y="10" width="18" height="6" rx="1" strokeWidth="1.5" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 19v4m0 0l-3-3m3 3l3-3" />
+                            </svg>
+                        </ToolbarButton>
+
+                        {/* Row: Delete */}
+                        <ToolbarButton onClick={() => editor.chain().focus().deleteRow().run()} title="Delete Row">
+                            <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <rect x="3" y="8" width="18" height="8" rx="1" strokeWidth="1.5" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h8" />
+                            </svg>
+                        </ToolbarButton>
+
+                        <div className="w-px h-4 bg-gray-300 mx-0.5"></div>
+
+                        {/* Column: Add Left */}
+                        <ToolbarButton onClick={() => editor.chain().focus().addColumnBefore().run()} title="Add Column Left">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 12H1m0 0l3-3m-3 3l3 3" />
+                                <rect x="8" y="3" width="6" height="18" rx="1" strokeWidth="1.5" />
+                                <rect x="16" y="3" width="6" height="18" rx="1" strokeWidth="1" opacity="0.4" />
+                            </svg>
+                        </ToolbarButton>
+
+                        {/* Column: Add Right */}
+                        <ToolbarButton onClick={() => editor.chain().focus().addColumnAfter().run()} title="Add Column Right">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <rect x="2" y="3" width="6" height="18" rx="1" strokeWidth="1" opacity="0.4" />
+                                <rect x="10" y="3" width="6" height="18" rx="1" strokeWidth="1.5" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 12h4m0 0l-3-3m3 3l-3 3" />
+                            </svg>
+                        </ToolbarButton>
+
+                        {/* Column: Delete */}
+                        <ToolbarButton onClick={() => editor.chain().focus().deleteColumn().run()} title="Delete Column">
+                            <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <rect x="8" y="3" width="8" height="18" rx="1" strokeWidth="1.5" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v8" />
+                            </svg>
+                        </ToolbarButton>
+
+                        <div className="w-px h-4 bg-gray-300 mx-0.5"></div>
+
+                        {/* Delete Table */}
+                        <ToolbarButton onClick={() => editor.chain().focus().deleteTable().run()} title="Delete Table">
+                            <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V4a1 1 0 011-1h6a1 1 0 011 1v3" />
+                            </svg>
+                        </ToolbarButton>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}

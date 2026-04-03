@@ -1,114 +1,160 @@
-import { Metadata } from 'next';
+
+import Image from 'next/image';
 import Link from 'next/link';
-import { stats } from '@/lib/data';
+import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'About VisionGuard',
-    description: 'Learn about VisionGuard — your trusted source for independent security camera reviews, doorbell comparisons, and smart home security guides.',
+    title: 'About Us | VisionGuard',
+    description: 'Learn about VisionGuard, our mission to showcase the beauty of Rajasthan, and the team behind the stories.',
+    alternates: {
+        canonical: '/about/',
+    },
+    openGraph: {
+        title: 'About VisionGuard - Our Mission & Story',
+        description: 'Discover the heart behind VisionGuard and our passion for Rajasthan travel.',
+        url: '/about/',
+        siteName: 'VisionGuard',
+        type: 'website',
+        images: [
+            {
+                url: '/images/rajasthan-desert-hero.webp',
+                width: 1200,
+                height: 630,
+                alt: 'About VisionGuard',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'About VisionGuard',
+        description: 'The story behind the Land of Kings travel site.',
+        images: ['/images/rajasthan-desert-hero.webp'],
+    },
 };
 
 export default function AboutPage() {
+    // Breadcrumb schema for Google search results
+    const breadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: 'https://www.VisionGuard.com/',
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'About Us',
+                item: 'https://www.VisionGuard.com/about/',
+            },
+        ],
+    };
+
+    // AboutPage schema
+    const aboutPageJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'AboutPage',
+        name: 'About VisionGuard',
+        description: 'Learn about VisionGuard, our mission to showcase the beauty of Rajasthan, and the team behind the stories.',
+        url: 'https://www.VisionGuard.com/about/',
+        mainEntity: {
+            '@type': 'Organization',
+            name: 'VisionGuard',
+            url: 'https://www.VisionGuard.com',
+            logo: 'https://www.VisionGuard.com/VisionGuard_logo.webp',
+        },
+    };
+
     return (
-        <div className="min-h-screen pt-24 pb-20 px-4">
-            <div className="max-w-5xl mx-auto">
-                {/* Hero */}
-                <div className="text-center mb-16">
-                    <h1 className="text-4xl md:text-5xl font-black text-white mb-6">
-                        About <span className="gradient-text">VisionGuard</span>
-                    </h1>
-                    <p className="text-[#94a3b8] text-lg max-w-3xl mx-auto leading-relaxed">
-                        We started VisionGuard with a simple mission: to help homeowners make informed decisions about their home security. In a market flooded with options, we cut through the noise with honest reviews and practical guides.
+        <div className="pt-24 pb-20">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutPageJsonLd) }}
+            />
+            {/* Hero Section */}
+            <div className="relative h-[400px] mb-16">
+                <Image
+                    src="/images/rajasthan-desert-hero.webp"
+                    alt="VisionGuard Desert"
+                    fill
+                    className="object-cover"
+                    priority
+                />
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <div className="text-center text-white px-4">
+                        <h1 className="text-4xl md:text-6xl font-bold mb-4 font-outfit">About VisionGuard</h1>
+                        <p className="text-xl md:text-2xl max-w-2xl mx-auto opacity-90">
+                            Celebrating the Land of Kings, one story at a time.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Content Container */}
+            <div className="max-w-4xl mx-auto px-4">
+                {/* Mission Section */}
+                <section className="mb-20 text-center">
+                    <h2 className="text-3xl font-bold text-royal-blue mb-6">Our Mission</h2>
+                    <p className="text-lg text-gray-700 leading-relaxed">
+                        At <span className="text-desert-gold font-bold">VisionGuard</span>, we believe that Rajasthan is more than just a destination—it's an emotion. From the golden sands of Jaisalmer to the lakes of Udaipur, our mission is to bring you the most authentic, hidden, and majestic stories from India's most colorful state. We aim to connect travelers with the rich heritage, culture, and warmth of Rajasthan.
                     </p>
-                </div>
+                </section>
 
-                {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-20">
-                    {stats.map((stat) => (
-                        <div key={stat.label} className="glass-card p-6 text-center" style={{ transform: 'none' }}>
-                            <div className="text-3xl mb-2">{stat.icon}</div>
-                            <div className="text-3xl font-bold text-white mb-1">{stat.value}</div>
-                            <div className="text-sm text-[#64748b]">{stat.label}</div>
+                {/* Values Grid */}
+                <section className="grid md:grid-cols-3 gap-8 mb-20">
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition-shadow">
+                        <div className="w-16 h-16 bg-desert-gold/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                            🏰
                         </div>
-                    ))}
-                </div>
-
-                {/* Our Story */}
-                <div className="glass-card p-8 md:p-12 mb-12" style={{ transform: 'none' }}>
-                    <h2 className="text-2xl font-bold text-white mb-6">Our Story</h2>
-                    <div className="space-y-4 text-[#94a3b8] leading-relaxed">
-                        <p>
-                            VisionGuard was born from frustration. As smart home enthusiasts, we found it nearly impossible to find unbiased, comprehensive reviews of security cameras and video doorbells. Most review sites were little more than thinly-veiled advertisements.
-                        </p>
-                        <p>
-                            We decided to do things differently. Every product on VisionGuard goes through rigorous, real-world testing. We install cameras on our own homes, test doorbells in real weather conditions, and stress-test smart locks over months of daily use.
-                        </p>
-                        <p>
-                            While we do earn affiliate commissions on qualifying purchases (which helps keep the lights on), our editorial opinions are never for sale. If a product doesn&apos;t meet our standards, we say so — regardless of potential revenue.
-                        </p>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">Heritage</h3>
+                        <p className="text-gray-600">Preserving and sharing the ancient tales of forts and palaces.</p>
                     </div>
-                </div>
-
-                {/* Values */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-                    {[
-                        {
-                            icon: '🔍',
-                            title: 'Transparency',
-                            text: 'We clearly label affiliate links and never hide our monetization. You deserve to know how we sustain our work.',
-                        },
-                        {
-                            icon: '🧪',
-                            title: 'Rigorous Testing',
-                            text: 'Every product is tested for at least 2 weeks in real conditions. We don\'t just read spec sheets — we live with these products.',
-                        },
-                        {
-                            icon: '🤲',
-                            title: 'Community First',
-                            text: 'We welcome guest contributions, user reviews, and community feedback. Your experience matters to us and to other readers.',
-                        },
-                        {
-                            icon: '📊',
-                            title: 'Data-Driven',
-                            text: 'Our reviews include objective measurements — video quality analysis, latency tests, battery life tracking, and more.',
-                        },
-                    ].map((value) => (
-                        <div key={value.title} className="glass-card p-6" style={{ transform: 'none' }}>
-                            <div className="text-3xl mb-3">{value.icon}</div>
-                            <h3 className="text-lg font-bold text-white mb-2">{value.title}</h3>
-                            <p className="text-[#94a3b8] text-sm leading-relaxed">{value.text}</p>
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition-shadow">
+                        <div className="w-16 h-16 bg-desert-gold/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                            🐪
                         </div>
-                    ))}
-                </div>
-
-                {/* Team */}
-                <div className="text-center mb-12">
-                    <h2 className="text-2xl font-bold text-white mb-8">Our Team</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[
-                            { name: 'Priya Sharma', role: 'Smart Home Expert', bio: 'Former IoT engineer with 6+ years in smart home tech' },
-                            { name: 'Rahul Verma', role: 'Tech Reviewer', bio: 'Consumer electronics journalist covering security tech' },
-                            { name: 'Ankit Patel', role: 'Security Consultant', bio: 'Certified security professional and CCTV specialist' },
-                        ].map((member) => (
-                            <div key={member.name} className="glass-card p-6 text-center" style={{ transform: 'none' }}>
-                                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#00d4ff] to-[#10b981] flex items-center justify-center text-2xl font-bold text-[#0a0e17] mx-auto mb-4">
-                                    {member.name.charAt(0)}
-                                </div>
-                                <h3 className="text-lg font-bold text-white">{member.name}</h3>
-                                <p className="text-[#00d4ff] text-sm font-medium mb-2">{member.role}</p>
-                                <p className="text-[#64748b] text-sm">{member.bio}</p>
-                            </div>
-                        ))}
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">Adventure</h3>
+                        <p className="text-gray-600">Guiding you to the best desert safaris and offbeat paths.</p>
                     </div>
-                </div>
+                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 text-center hover:shadow-md transition-shadow">
+                        <div className="w-16 h-16 bg-desert-gold/10 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                            🤝
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">Community</h3>
+                        <p className="text-gray-600">Building a community of travelers who love and respect the land.</p>
+                    </div>
+                </section>
 
-                {/* CTA */}
-                <div className="text-center">
-                    <h2 className="text-2xl font-bold text-white mb-4">Want to Contribute?</h2>
-                    <p className="text-[#94a3b8] mb-6">We&apos;re always looking for passionate writers and security enthusiasts.</p>
-                    <Link href="/submit" className="btn-primary text-lg px-8 py-4">
-                        Submit Your Blog →
-                    </Link>
-                </div>
+                {/* Story/Team Section */}
+                <section className="flex flex-col md:flex-row items-center gap-12 bg-royal-blue text-white rounded-3xl p-8 md:p-12 shadow-xl overflow-hidden relative">
+                    {/* Pattern Overlay */}
+                    <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #D4A853 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+
+                    <div className="md:w-1/2 relative z-10">
+                        <h2 className="text-3xl font-bold mb-4 text-desert-gold">Why We Started</h2>
+                        <p className="text-gray-200 mb-6 leading-relaxed">
+                            VisionGuard began as a small diary of a traveler who fell in love with uniformity of the Thar Desert. Today, it has grown into a platform where travelers from around the world share their experiences. We want to make sure your trip to Rajasthan is nothing short of magical.
+                        </p>
+                        <Link href="/contact" className="inline-block bg-desert-gold text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-royal-blue transition-all">
+                            Contact Us
+                        </Link>
+                    </div>
+                    <div className="md:w-1/2 relative h-64 w-full rounded-xl overflow-hidden border-4 border-white/20 shadow-lg">
+                        <Image
+                            src="/images/jaipur-hawa-mahal.webp"
+                            alt="Hawa Mahal"
+                            fill
+                            className="object-cover"
+                        />
+                    </div>
+                </section>
             </div>
         </div>
     );

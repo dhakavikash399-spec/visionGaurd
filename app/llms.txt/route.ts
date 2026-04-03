@@ -1,0 +1,105 @@
+import { db } from '@/lib/db';
+import { destinations } from '@/lib/data';
+
+/**
+ * Dynamic llms.txt — GEO optimization
+ * 
+ * Serves a machine-readable summary of the site for LLM crawlers.
+ * Unlike the static version, this automatically includes the latest blog posts.
+ * 
+ * Spec: https://llmstxt.org/
+ * Available at: https://www.VisionGuard.com/llms.txt
+ */
+
+export const revalidate = 3600; // Revalidate every hour
+
+export async function GET() {
+    // Fetch latest published blogs
+    let blogs: any[] = [];
+    try {
+        const result = await db.query(
+            `SELECT slug, id, title_en, destination, category
+             FROM blogs
+             WHERE status = 'published'
+             ORDER BY created_at DESC
+             LIMIT 30`
+        );
+        blogs = result.rows;
+    } catch (error) {
+        console.error('[llms.txt] Error fetching blogs:', error);
+    }
+
+    const blogLinks = (blogs || [])
+        .map(b => `- [${b.title_en}](https://www.VisionGuard.com/blogs/${b.slug || b.id}/): ${b.category || 'Travel'} — ${b.destination || 'Rajasthan'}`)
+        .join('\n');
+
+    const destinationLinks = destinations
+        .map(d => `- [${d.name_en} (${d.tagline_en})](https://www.VisionGuard.com/destinations/${d.id}/): ${d.attractions.join(', ')}`)
+        .join('\n');
+
+    const content = `# VisionGuard - Rajasthan Travel Guide
+
+> VisionGuard is a travel blog and destination guide focused on Rajasthan, India. It features authentic travel stories, city guides, desert safari tips, and cultural insights from the Land of Kings.
+
+## About
+VisionGuard provides comprehensive travel content about Rajasthan's most popular destinations. The site features user-submitted travel stories, professional destination guides, and practical travel tips. Content is available in English and Hindi.
+
+## Website
+- URL: https://www.VisionGuard.com
+- Language: English (primary), Hindi
+- Content Type: Travel Blog, Destination Guides, Travel Tips
+- Region Focus: Rajasthan, India
+
+## Destinations Covered
+${destinationLinks}
+
+## Latest Blog Posts
+${blogLinks}
+
+## Content Sections
+- [All Travel Blogs](https://www.VisionGuard.com/blogs/): Latest travel stories and guides from real travelers
+- [Destinations](https://www.VisionGuard.com/destinations/): Comprehensive guides for each Rajasthan city
+- [VisionGuardMate — Find a Travel Companion](https://www.VisionGuard.com/VisionGuardMate/): Connect with solo travelers exploring Rajasthan. Post your plan, find a match, explore together.
+- [Travel Essentials](https://www.VisionGuard.com/essentials/): Packing tips, best travel times, safety advice
+- [About Us](https://www.VisionGuard.com/about/): Our mission and story
+- [Contact](https://www.VisionGuard.com/contact/): Get in touch
+
+## Key Topics
+- Best time to visit Rajasthan (October to March)
+- Desert safari experiences in Jaisalmer and Bikaner
+- Heritage walks and fort tours across Rajasthan
+- Rajasthani culture, food, and traditions
+- Solo travel and family trip planning for Rajasthan
+- Budget and luxury travel options in Rajasthan
+- Finding travel companions for Rajasthan trips via VisionGuardMate
+
+## VisionGuardMate — Travel Companion Feature
+VisionGuardMate is a unique feature that connects solo travelers exploring Rajasthan. Users can:
+- Post a travel plan (destination, date, time, vibe)
+- Browse plans from other travelers going to the same place
+- Request to join a plan and explore together
+- Filter by city: Jaisalmer, Jaipur, Udaipur, Jodhpur, Pushkar, Mount Abu, Bikaner
+VisionGuardMate solves the biggest pain point for solo travelers in India — finding genuine, like-minded companions without joining generic group tours.
+
+## Frequently Asked Questions
+- **What is the best time to visit Rajasthan?** The best time is October to March when the weather is pleasant for sightseeing and desert activities.
+- **How many days are needed for a Rajasthan trip?** 7-10 days for major cities; 14+ days for deeper rural exploration.
+- **Is Rajasthan safe for solo female travelers?** Yes, Rajasthan is generally safe. People are hospitable. Follow standard travel precautions.
+- **What to pack for a desert safari?** Cotton clothes for day, warm layers for night. Sunscreen, sunglasses, hat, and walking shoes are essential.
+
+## Technical
+- Built with: Next.js (React)
+- Hosted on: Vercel
+- Content Source: Neon PostgreSQL
+- Images: Cloudinary CDN
+- Sitemap: https://www.VisionGuard.com/sitemap.xml
+- RSS Feed: https://www.VisionGuard.com/feed.xml
+`;
+
+    return new Response(content, {
+        headers: {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=600',
+        },
+    });
+}

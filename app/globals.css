@@ -1,337 +1,389 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-:root {
-  --background: #0a0e17;
-  --foreground: #e8ecf4;
-  --accent-cyan: #00d4ff;
-  --accent-emerald: #10b981;
-  --accent-blue: #3b82f6;
-  --card-bg: rgba(15, 23, 42, 0.8);
-  --card-border: rgba(0, 212, 255, 0.12);
-  --glass-bg: rgba(255, 255, 255, 0.06);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --text-muted: #94a3b8;
-  --text-secondary: #cbd5e1;
-  --surface-dark: #0f172a;
-  --surface-darker: #020617;
-}
+/* Font families using CSS variables from next/font (no render-blocking @import) */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-accent-cyan: var(--accent-cyan);
-  --color-accent-emerald: var(--accent-emerald);
-  --color-accent-blue: var(--accent-blue);
-  --color-card-bg: var(--card-bg);
-  --color-card-border: var(--card-border);
-  --color-glass-bg: var(--glass-bg);
-  --color-glass-border: var(--glass-border);
-  --color-text-muted: var(--text-muted);
-  --color-text-secondary: var(--text-secondary);
-  --color-surface-dark: var(--surface-dark);
-  --color-surface-darker: var(--surface-darker);
-
-  --font-sans: 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-}
-
-/* ========== Base ========== */
+/* Base Styles */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
+    font-family: var(--font-outfit), 'Outfit', sans-serif;
+    background-color: #f7f7f7;
+    min-height: 100vh;
 }
 
-/* ========== Gradient Text ========== */
+body.hindi {
+    font-family: var(--font-noto-sans-devanagari), 'Noto Sans Devanagari', sans-serif;
+}
+
+/* Gradient text */
 .gradient-text {
-  background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-emerald) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+    background: linear-gradient(135deg, #D4A853 0%, #B8922F 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-.gradient-text-gold {
-  background: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* ========== Glass Effect ========== */
+/* Glass effect */
 .glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.glass-card {
-  background: var(--card-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--card-border);
-  border-radius: 1rem;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-card:hover {
-  border-color: rgba(0, 212, 255, 0.3);
-  box-shadow: 0 0 30px rgba(0, 212, 255, 0.08), 0 8px 32px rgba(0, 0, 0, 0.3);
-  transform: translateY(-4px);
-}
-
-/* ========== Glow Effects ========== */
-.glow-cyan {
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.15), 0 0 60px rgba(0, 212, 255, 0.05);
-}
-
-.glow-emerald {
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.15), 0 0 60px rgba(16, 185, 129, 0.05);
-}
-
-.text-glow-cyan {
-  text-shadow: 0 0 20px rgba(0, 212, 255, 0.4);
-}
-
-/* ========== Animations ========== */
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideDown {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes bounceSlow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); }
-  50% { box-shadow: 0 0 40px rgba(0, 212, 255, 0.4); }
-}
-
-@keyframes floatUp {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-}
-
-@keyframes scanline {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-.animate-fade-in { animation: fadeIn 0.6s ease forwards; }
-.animate-slide-up { animation: slideUp 0.6s ease forwards; }
-.animate-slide-down { animation: slideDown 0.5s ease forwards; }
-.animate-bounce-slow { animation: bounceSlow 2s infinite; }
-.animate-pulse-glow { animation: pulseGlow 3s ease-in-out infinite; }
-.animate-float { animation: floatUp 4s ease-in-out infinite; }
-.animate-shimmer { animation: shimmer 1.5s ease-in-out infinite; }
-
-.stagger-1 { animation-delay: 0.1s; }
-.stagger-2 { animation-delay: 0.2s; }
-.stagger-3 { animation-delay: 0.3s; }
-.stagger-4 { animation-delay: 0.4s; }
-
-/* ========== Line Clamp ========== */
+/* Line clamp */
 .line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .line-clamp-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
-/* ========== Prose Styles ========== */
+/* Prose styles for blog content */
 .prose {
-  max-width: 100%;
-  color: var(--text-secondary);
+    max-width: 100%;
+    color: #374151;
 }
 
 .prose h1 {
-  font-size: 2.25rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
-  color: var(--foreground);
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: #1E3A5F;
 }
 
 .prose h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  color: var(--foreground);
-  scroll-margin-top: 100px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: #1E3A5F;
+    scroll-margin-top: 100px;
+    /* Account for fixed navbar on anchor scroll */
 }
 
 .prose h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-top: 1.5rem;
-  margin-bottom: 0.75rem;
-  color: var(--foreground);
-  scroll-margin-top: 100px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #1E3A5F;
+    scroll-margin-top: 100px;
+    /* Account for fixed navbar on anchor scroll */
 }
 
 .prose p {
-  margin-bottom: 1.25rem;
-  line-height: 1.75;
+    margin-bottom: 1.25rem;
+    line-height: 1.75;
 }
 
 .prose img {
-  border-radius: 0.75rem;
-  margin: 1.5rem auto;
-  display: block;
-  width: auto;
-  max-width: 100%;
-  height: auto;
-  max-height: 600px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    border-radius: 0.75rem;
+    margin: 1.5rem auto;
+    /* Center images */
+    display: block;
+    width: auto;
+    /* Allow natural width scaling */
+    max-width: 100%;
+    /* Ensure it doesn't overflow container */
+    height: auto;
+    /* Maintain aspect ratio */
+    max-height: 600px;
+    /* Limit height to prevent taking up too much screen */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Semantic figure + figcaption for blog images (SEO + UX) */
+.prose figure {
+    margin: 2rem auto;
+    max-width: 100%;
+    text-align: center;
+}
+
+.prose figure img {
+    margin-bottom: 0.5rem;
+}
+
+.prose figcaption {
+    font-size: 0.875rem;
+    color: #6b7280;
+    line-height: 1.5;
+    padding: 0 1rem;
+    font-style: italic;
+}
+
+.prose figcaption a {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    text-decoration: underline;
+    font-style: normal;
 }
 
 .prose a {
-  color: var(--accent-cyan);
-  text-decoration: underline;
+    color: #D4A853;
+    text-decoration: underline;
 }
 
-.prose ul, .prose ol {
-  margin-bottom: 1.25rem;
-  padding-left: 1.5rem;
+.prose ul,
+.prose ol {
+    margin-bottom: 1.25rem;
+    padding-left: 1.5rem;
 }
 
 .prose li {
-  margin-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 
 .prose blockquote {
-  border-left: 4px solid var(--accent-cyan);
-  padding-left: 1rem;
-  font-style: italic;
-  color: var(--text-muted);
-  margin: 1.5rem 0;
+    border-left: 4px solid #D4A853;
+    padding-left: 1rem;
+    font-style: italic;
+    color: #6b7280;
+    margin: 1.5rem 0;
 }
 
-.prose strong, .prose b {
-  font-weight: 700;
-  color: var(--foreground);
+/* Video styles for blog content */
+.prose video {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin: 2rem 0;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: #000;
 }
 
-.prose table {
-  border-collapse: separate;
-  border-spacing: 0;
-  margin: 2rem 0;
-  width: 100%;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 0.75rem;
-  overflow: hidden;
+/* Modern Table styles for blog content and editor */
+.prose table,
+.tiptap-editor table {
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 2rem 0;
+    width: 100%;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    font-size: 0.95rem;
 }
 
-.prose th, .prose td {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 0.75rem 1rem;
+.prose th,
+.tiptap-editor th,
+.prose td,
+.tiptap-editor td {
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #f1f5f9;
+    padding: 0.75rem 1rem;
+    min-width: 1em;
+    position: relative;
+    vertical-align: middle;
+    box-sizing: border-box;
+    transition: background-color 0.15s ease;
 }
 
-.prose th {
-  background: rgba(0, 212, 255, 0.05);
-  font-weight: 600;
-  text-align: left;
-  color: var(--accent-cyan);
+/* Remove right border on last column */
+.prose th:last-child,
+.tiptap-editor th:last-child,
+.prose td:last-child,
+.tiptap-editor td:last-child {
+    border-right: none;
 }
 
-/* ========== Custom Button Styles ========== */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 2rem;
-  background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-emerald) 100%);
-  color: #0a0e17;
-  font-weight: 700;
-  border-radius: 0.75rem;
-  transition: all 0.3s ease;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
+/* Remove bottom border on last row */
+.prose tr:last-child td,
+.tiptap-editor tr:last-child td,
+.prose tr:last-child th,
+.tiptap-editor tr:last-child th {
+    border-bottom: none;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0, 212, 255, 0.3);
+/* Header cells — NOT forced bold. Same as regular cells by default.
+   User can bold manually via toolbar if they want. */
+.prose th,
+.tiptap-editor th {
+    background-color: #f8fafc;
+    font-weight: normal;
+    text-align: left;
+    color: #374151;
 }
 
-.btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 2rem;
-  background: transparent;
-  color: var(--accent-cyan);
-  font-weight: 600;
-  border-radius: 0.75rem;
-  border: 2px solid var(--accent-cyan);
-  cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.3s ease;
+/* Alternating row colors for readability */
+.prose tr:nth-child(even),
+.tiptap-editor tr:nth-child(even) {
+    background-color: #fafbfc;
 }
 
-.btn-secondary:hover {
-  background: rgba(0, 212, 255, 0.1);
-  transform: translateY(-2px);
+/* Row hover effect — subtle highlight */
+.prose tbody tr:hover,
+.tiptap-editor tbody tr:hover {
+    background-color: #f0f4ff;
 }
 
-/* ========== Scrollbar ========== */
+/* Selected cell styles in editor */
+.tiptap-editor .selectedCell:after {
+    background: rgba(59, 130, 246, 0.12);
+    content: "";
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 2;
+}
+
+.tiptap-editor .column-resize-handle {
+    background-color: #3b82f6;
+    bottom: -2px;
+    position: absolute;
+    right: -2px;
+    top: 0;
+    width: 3px;
+    border-radius: 3px;
+    opacity: 0.6;
+}
+
+/* Mobile: scrollable wrapper for blog tables (injected by processContentForSEO) */
+.table-scroll-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 2rem 0;
+}
+
+/* Remove margin from table when inside wrapper (wrapper handles it) */
+.table-scroll-wrapper table {
+    margin: 0;
+}
+
+/* Editor tables: keep direct scroll on mobile */
+@media (max-width: 640px) {
+    .tiptap-editor table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+.prose strong,
+.prose b {
+    font-weight: 700;
+    color: #111827;
+}
+
+/* TipTap Editor Styles */
+.tiptap-editor {
+    min-height: 300px;
+    outline: none;
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Desktop: comfortable reading width, centered */
+@media (min-width: 768px) {
+    .tiptap-editor {
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+.tiptap-editor:focus {
+    outline: none;
+}
+
+.tiptap-editor p.is-editor-empty:first-child::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: #adb5bd;
+    pointer-events: none;
+    height: 0;
+}
+
+/* Editor Image Styles */
+.tiptap-editor img,
+.editor-image {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 0.75rem;
+}
+
+.tiptap-editor img:hover,
+.editor-image:hover {
+    box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.3);
+    transform: scale(1.01);
+}
+
+.tiptap-editor img.ProseMirror-selectednode,
+.editor-image.ProseMirror-selectednode {
+    box-shadow: 0 0 0 3px #1E3A5F;
+    outline: none;
+}
+
+/* Image click hint */
+.tiptap-editor img::after {
+    content: 'Click to edit';
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.tiptap-editor img:hover::after {
+    opacity: 1;
+}
+
+/* Animation delays */
+.stagger-1 {
+    animation-delay: 0.1s;
+}
+
+.stagger-2 {
+    animation-delay: 0.2s;
+}
+
+.stagger-3 {
+    animation-delay: 0.3s;
+}
+
+.stagger-4 {
+    animation-delay: 0.4s;
+}
+
+/* Shimmer animation for skeleton loaders */
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.animate-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* Scrollbar hide utility */
 .scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--surface-darker);
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 212, 255, 0.3);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 212, 255, 0.5);
-}
-
-/* ========== Grid pattern background ========== */
-.bg-grid {
-  background-image: 
-    linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
+    display: none;
 }

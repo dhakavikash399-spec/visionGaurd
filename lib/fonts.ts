@@ -1,9 +1,10 @@
-import { Inter } from 'next/font/google';
+import { Outfit } from 'next/font/google';
 
-export const inter = Inter({
+// Primary font — English content
+export const outfit = Outfit({
     subsets: ['latin'],
-    weight: ['400', '500', '600', '700', '800', '900'],
+    weight: ['400', '500', '600', '700', '800'],
     display: 'swap',
-    variable: '--font-inter',
+    variable: '--font-outfit',
     preload: true,
 });

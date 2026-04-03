@@ -1,63 +1,99 @@
+import { Suspense } from 'react';
+import { fetchPublishedBlogs, fetchAvailableDestinations } from '@/lib/db/queries';
+import BlogsClient from './BlogsClient';
 import { Metadata } from 'next';
-import BlogCard from '@/components/BlogCard';
-import { blogPosts, blogCategories } from '@/lib/data';
 
 export const metadata: Metadata = {
-    title: 'Blog - Security Camera Reviews & Guides',
-    description: 'Expert articles on security cameras, video doorbells, smart home integration, and home security tips from verified professionals.',
+    title: 'Travel Blogs | VisionGuard',
+    description: 'Read the latest travel stories, guides, and tips from Rajasthan. Explore diverse destinations and cultural insights.',
+    alternates: {
+        canonical: '/blogs/',
+    },
+    openGraph: {
+        title: 'Travel Blogs - Rajasthan Travel Stories | VisionGuard',
+        description: 'Discover Rajasthan through authentic travel stories and guides. From Jaipur to Jaisalmer, explore the land of kings.',
+        url: '/blogs/',
+        siteName: 'VisionGuard',
+        locale: 'en_IN',
+        type: 'website',
+        images: [
+            {
+                url: '/images/rajasthan-desert-hero.webp',
+                width: 1200,
+                height: 630,
+                alt: 'VisionGuard Travel Blogs',
+            },
+        ],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: 'Travel Blogs | VisionGuard',
+        description: 'Read the latest travel stories and guides from across Rajasthan.',
+        images: ['/images/rajasthan-desert-hero.webp'],
+    },
 };
 
-export default function BlogsPage() {
+// Revalidate interval (configurable via env)
+export const revalidate = parseInt(process.env.REVALIDATE_SECONDS || '60', 10);
+
+export default async function BlogsPage() {
+    // 1. Fetch data on the server
+    const blogs = await fetchPublishedBlogs();
+    const destinations = await fetchAvailableDestinations();
+
+    // ItemList structured data — helps Google understand this is a blog index
+    const itemListJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Travel Blogs | VisionGuard',
+        description: 'Read the latest travel stories, guides, and tips from Rajasthan.',
+        url: 'https://www.VisionGuard.com/blogs/',
+        mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: blogs.length,
+            itemListElement: blogs.slice(0, 30).map((blog, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                name: blog.title_en,
+                url: `https://www.VisionGuard.com/blogs/${blog.slug || blog.id}/`,
+            })),
+        },
+    };
+
+    // BreadcrumbList schema — shows breadcrumb trail in Google search results
+    const breadcrumbJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Home',
+                item: 'https://www.VisionGuard.com/',
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Travel Blogs',
+                item: 'https://www.VisionGuard.com/blogs/',
+            },
+        ],
+    };
+
+    // 2. Pass data to the Client Component
     return (
-        <div className="min-h-screen pt-24 pb-20 px-4">
-            {/* Hero */}
-            <div className="max-w-7xl mx-auto mb-16">
-                <div className="text-center mb-12">
-                    <div className="inline-flex items-center gap-2 glass px-4 py-1.5 rounded-full text-sm mb-6">
-                        <span className="text-[#00d4ff]">📝</span>
-                        <span className="text-[#94a3b8]">{blogPosts.length} Articles Published</span>
-                    </div>
-                    <h1 className="text-4xl md:text-5xl font-black text-white mb-4">
-                        Security <span className="gradient-text">Blog</span>
-                    </h1>
-                    <p className="text-[#94a3b8] text-lg max-w-2xl mx-auto">
-                        Expert reviews, buying guides, installation tutorials, and the latest in smart home security technology.
-                    </p>
-                </div>
-
-                {/* Categories */}
-                <div className="flex flex-wrap gap-3 justify-center mb-12">
-                    <button className="px-4 py-2 rounded-lg bg-gradient-to-r from-[#00d4ff] to-[#10b981] text-[#0a0e17] text-sm font-bold">
-                        All Posts
-                    </button>
-                    {blogCategories.map((cat) => (
-                        <button
-                            key={cat.id}
-                            className="px-4 py-2 rounded-lg bg-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.08)] text-[#94a3b8] text-sm font-medium hover:text-[#00d4ff] hover:border-[rgba(0,212,255,0.3)] transition-all"
-                        >
-                            {cat.icon} {cat.name}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Blog Grid */}
-            <div className="max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {blogPosts.map((blog, index) => (
-                        <BlogCard key={blog.id} blog={blog} priority={index === 0} />
-                    ))}
-                </div>
-
-                {/* If no blogs */}
-                {blogPosts.length === 0 && (
-                    <div className="text-center py-20">
-                        <div className="text-6xl mb-4">📝</div>
-                        <h3 className="text-xl font-bold text-white mb-2">No articles yet</h3>
-                        <p className="text-[#64748b]">Check back soon for expert security reviews and guides.</p>
-                    </div>
-                )}
-            </div>
-        </div>
+        <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+            />
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+            />
+            <Suspense fallback={<div className="text-center py-12">Loading...</div>}>
+                <BlogsClient initialBlogs={blogs} destinations={destinations} />
+            </Suspense>
+        </>
     );
 }
