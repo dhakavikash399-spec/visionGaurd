@@ -14,34 +14,18 @@ import { useSession, signOut } from 'next-auth/react';
 
 
 const destinations = [
-    { value: '', label: 'Select destination' },
-    { value: 'jaipur', label: 'Jaipur' },
-    { value: 'udaipur', label: 'Udaipur' },
-    { value: 'jaisalmer', label: 'Jaisalmer' },
-    { value: 'jodhpur', label: 'Jodhpur' },
-    { value: 'pushkar', label: 'Pushkar' },
-    { value: 'mount-abu', label: 'Mount Abu' },
-    { value: 'ajmer', label: 'Ajmer' },
-    { value: 'bikaner', label: 'Bikaner' },
-    { value: 'chittorgarh', label: 'Chittorgarh' },
-    { value: 'kumbhalgarh', label: 'Kumbhalgarh' },
-    { value: 'ranthambore', label: 'Ranthambore' },
-    { value: 'bharatpur', label: 'Bharatpur' },
-    { value: 'alwar', label: 'Alwar' },
-    { value: 'kota', label: 'Kota' },
-    { value: 'bundi', label: 'Bundi' },
-    { value: 'shekhawati', label: 'Shekhawati' },
-    { value: 'rajasthan', label: 'Rajasthan (Other)' },
+    { value: '', label: 'Select camera type' },
+    { value: 'Indoor Cameras', label: 'Indoor Cameras' },
+    { value: 'Outdoor Cameras', label: 'Outdoor Cameras' },
+    { value: 'Doorbell Cameras', label: 'Doorbell Cameras' },
+    { value: 'Wireless Systems', label: 'Wireless Systems' },
 ];
 
 const categories = [
-    { value: '', label: 'Select category' },
-    { value: 'City Guide', label: 'City Guide' },
-    { value: 'Travel Story', label: 'Travel Story' },
-    { value: 'Adventure', label: 'Adventure' },
-    { value: 'Food & Culture', label: 'Food & Culture' },
-    { value: 'Budget Travel', label: 'Budget Travel' },
-    { value: 'Luxury', label: 'Luxury' },
+    { value: '', label: 'Select content type' },
+    { value: 'guides', label: 'Buying Guides' },
+    { value: 'security-tips', label: 'Security Tips' },
+    { value: 'reviews', label: 'Product Reviews' },
 ];
 
 export default function SubmitPage() {
@@ -261,7 +245,7 @@ export default function SubmitPage() {
             titleEn || ''
         );
         // Use the provided alt text, fall back to blog title, then destination
-        const finalAlt = altText?.trim() || titleEn || destination || 'Rajasthan travel photo';
+        const finalAlt = altText?.trim() || titleEn || destination || 'security camera setup photo';
         setContentEn((prev) => prev + `<img src="${url}" alt="${finalAlt.replace(/"/g, '&quot;')}" />`);
     };
 
@@ -317,7 +301,9 @@ export default function SubmitPage() {
                 excerpt_hi: excerptHi || excerptEn,
                 content_en: cleanContentEn,
                 content_hi: cleanContentHi,
-                coverImage: coverImage || '/images/jaipur-hawa-mahal.webp',
+                coverImage: coverImage || '/VisionGuard_logo.webp',
+                // If editor cover image is missing, fall back to the site logo
+                // (keeps submissions robust even without Cloudinary uploads)
                 images: usedImages,
                 meta_title: metaTitle || titleEn,
                 meta_description: metaDescription || excerptEn,
@@ -386,10 +372,10 @@ export default function SubmitPage() {
                         <h2 className="text-2xl font-bold mb-4">{t('Thank You!', 'धन्यवाद!')}</h2>
                         <p className="text-gray-600 mb-6">
                             {isAdminUser
-                                ? t('Your blog has been published successfully and is now live on the website!', 'आपका ब्लॉग सफलतापूर्वक प्रकाशित हो गया है और अब वेबसाइट पर लाइव है!')
+                                ? t('Your guide has been published successfully and is now live on the website!', 'आपका गाइड सफलतापूर्वक प्रकाशित हो गया है और अब वेबसाइट पर लाइव है!')
                                 : t(
-                                    "Your blog has been submitted successfully and is under review. We'll notify you once it's published.",
-                                    'आपका ब्लॉग सफलतापूर्वक जमा हो गया है और समीक्षाधीन है। प्रकाशित होने पर हम आपको सूचित करेंगे।'
+                                    "Your guide has been submitted successfully and is under review. We'll notify you once it's published.",
+                                    'आपका गाइड सफलतापूर्वक जमा हो गया है और समीक्षाधीन है। प्रकाशित होने पर हम आपको सूचित करेंगे।'
                                 )
                             }
                         </p>
@@ -399,7 +385,7 @@ export default function SubmitPage() {
                                     href={`/blogs/${createdSlug}/`}
                                     className="inline-block px-6 py-3 bg-desert-gold text-white font-semibold rounded-lg hover:bg-opacity-90 transition-all"
                                 >
-                                    {t('View Blog', 'ब्लॉग देखें')}
+                                    {t('View Guide', 'गाइड देखें')}
                                 </Link>
                             )}
                             <Link
@@ -444,8 +430,8 @@ export default function SubmitPage() {
                         </h3>
                         <p className="text-gray-600 mb-6">
                             {t(
-                                'Please login first to submit your blog. You need to be logged in to submit travel stories.',
-                                'कृपया पहले लॉगिन करें। यात्रा कहानियां जमा करने के लिए आपको लॉगिन होना आवश्यक है।'
+                                'Please login first to submit your guide. You need to be logged in to submit CCTV and security recommendations.',
+                                'कृपया पहले लॉगिन करें। CCTV और सुरक्षा सुझाव जमा करने के लिए आपको लॉगिन होना आवश्यक है।'
                             )}
                         </p>
                         <div className="flex gap-3">
@@ -524,12 +510,12 @@ export default function SubmitPage() {
 
                         <div className="text-center">
                             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-                                {t('Submit Your Travel Story', 'अपनी यात्रा कहानी जमा करें')}
+                                {t('Submit Your Security Guide', 'अपनी सुरक्षा गाइड जमा करें')}
                             </h1>
                             <p className="text-lg opacity-90">
                                 {t(
-                                    'Share your Rajasthan experience with our community',
-                                    'हमारे समुदाय के साथ अपना राजस्थान अनुभव साझा करें'
+                                    'Share your CCTV and home security recommendations with our community',
+                                    'हमारे समुदाय के साथ अपना CCTV और होम सुरक्षा अनुभव साझा करें'
                                 )}
                             </p>
                         </div>
@@ -614,15 +600,15 @@ export default function SubmitPage() {
                                 )}
 
                                 {/* Blog Details */}
-                                <div className="bg-white rounded-2xl shadow-sm p-6">
-                                    <h2 className="text-xl font-bold mb-4 text-royal-blue">
-                                        {t('Blog Details', 'ब्लॉग विवरण')}
-                                    </h2>
+                                        <div className="bg-white rounded-2xl shadow-sm p-6">
+                                            <h2 className="text-xl font-bold mb-4 text-royal-blue">
+                                                {t('Guide Details', 'गाइड विवरण')}
+                                            </h2>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                {t('Destinations', 'स्थान')}
+                                                {t('Camera Types', 'कैमरा प्रकार')}
                                             </label>
 
                                             {/* Multi-select Tags */}
@@ -662,7 +648,7 @@ export default function SubmitPage() {
                                                 }}
                                                 className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-desert-gold"
                                             >
-                                                <option value="">{t('Add a destination...', 'एक गंतव्य जोड़ें...')}</option>
+                                                <option value="">{t('Add a camera type...', 'एक कैमरा प्रकार जोड़ें...')}</option>
                                                 {destinations.filter(d => d.value && !destination.split(',').includes(d.value)).map((d) => (
                                                     <option key={d.value} value={d.value}>
                                                         {d.label}
@@ -670,7 +656,7 @@ export default function SubmitPage() {
                                                 ))}
                                             </select>
                                             <p className="text-xs text-gray-500 mt-1">
-                                                {t('You can select multiple cities.', 'आप कई शहरों का चयन कर सकते हैं।')}
+                                                {t('You can select multiple camera types.', 'आप कई कैमरा प्रकार चुन सकते हैं।')}
                                             </p>
                                         </div>
                                         <div>
@@ -776,7 +762,7 @@ export default function SubmitPage() {
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <div className="text-sm font-medium text-gray-700">
-                                                    {t('Your Story', 'आपकी कहानी')}
+                                                    {t('Your Guide', 'आपका गाइड')}
                                                 </div>
                                                 <p className="text-xs text-gray-500">
                                                     {t(
@@ -798,8 +784,8 @@ export default function SubmitPage() {
                                             content={contentEn}
                                             onChange={setContentEn}
                                             placeholder={t(
-                                                'Start typing your travel story... You can add images, headings and more.',
-                                                'अपनी यात्रा की कहानी लिखना शुरू करें... आप इमेज, हेडिंग और बहुत कुछ जोड़ सकते हैं।'
+                                                'Start typing your CCTV & security guide... You can add images, headings and more.',
+                                                'अपनी CCTV और सुरक्षा गाइड लिखना शुरू करें... आप इमेज, हेडिंग और बहुत कुछ जोड़ सकते हैं।'
                                             )}
                                             onImageUpload={handleImageUpload}
                                         />
@@ -971,16 +957,16 @@ export default function SubmitPage() {
                                             : submitting
                                                 ? t('Submitting...', 'जमा हो रहा है...')
                                                 : isAdminUser
-                                                    ? t('Publish Blog Now', 'अभी ब्लॉग प्रकाशित करें')
-                                                    : t('Submit Blog for Review', 'समीक्षा के लिए ब्लॉग जमा करें')}
+                                                    ? t('Publish Guide Now', 'अभी गाइड प्रकाशित करें')
+                                                    : t('Submit Guide for Review', 'समीक्षा के लिए गाइड जमा करें')}
                                 </button>
 
                                 <p className="text-center text-gray-500 text-sm">
                                     {isAdminUser
-                                        ? t('You are logged in as admin. Your blog will be published immediately.', 'आप व्यवस्थापक के रूप में लॉग इन हैं। आपका ब्लॉग तुरंत प्रकाशित किया जाएगा।')
+                                        ? t('You are logged in as admin. Your guide will be published immediately.', 'आप व्यवस्थापक के रूप में लॉग इन हैं। आपका गाइड तुरंत प्रकाशित किया जाएगा।')
                                         : t(
-                                            'Your blog will be reviewed by our team before publishing',
-                                            'प्रकाशन से पहले हमारी टीम द्वारा आपके ब्लॉग की समीक्षा की जाएगी'
+                                            'Your guide will be reviewed by our team before publishing',
+                                            'प्रकाशन से पहले हमारी टीम द्वारा आपके गाइड की समीक्षा की जाएगी'
                                         )
                                     }
                                 </p>

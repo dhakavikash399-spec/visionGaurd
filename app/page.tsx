@@ -1,35 +1,69 @@
 import { Metadata } from 'next';
-import { destinations } from '@/lib/data';
-import { fetchBlogCountsByDestination, fetchPublishedBlogs } from '@/lib/db/queries';
-import HomePageClient from './HomePageClient';
+import { fetchProducts, fetchPublishedBlogs } from '@/lib/db/queries';
+import SecurityHomePageClient from './SecurityHomePageClient';
 
 export const metadata: Metadata = {
-    title: 'VisionGuard - Travel Stories from the Land of Kings',
+    title: 'Home Security & CCTV Cameras | VisionGuard',
     description:
-        'VisionGuard - Your gateway to Rajasthan travel stories, destination guides, and insider tips. Discover Jaipur, Udaipur, Jaisalmer, Jodhpur, and more.',
+        'Discover CCTV cameras, smart home security, and surveillance systems. Read buying guides, security tips, and product reviews—then check prices via affiliate links.',
     alternates: {
         canonical: '/',
+    },
+    other: {
+        keywords: 'CCTV, home security, surveillance, security cameras, smart home security, AI detection, night vision',
     },
 };
 
 // Revalidate homepage every 60 seconds (ISR) — fast for repeat visitors, fresh content
-export const revalidate = parseInt(process.env.REVALIDATE_SECONDS || '60', 10);
+export const revalidate = 60;
 
 export default async function HomePage() {
     // Fetch data on the server — this HTML is what Google sees
-    const [counts, dbBlogs] = await Promise.all([
-        fetchBlogCountsByDestination(),
-        fetchPublishedBlogs(6),
+    let [products, blogs] = await Promise.all([
+        fetchProducts().catch(() => []),
+        fetchPublishedBlogs(9).catch(() => []),
     ]);
 
-    // Merge blog counts into destinations
-    const destinationsWithCounts = destinations.map(dest => ({
-        ...dest,
-        blogCount: counts[dest.id.toLowerCase()] || 0,
-    }));
+    // ** DUMMY DATA FALLBACK **
+    if (!products || products.length === 0) {
+        products = [
+            {
+                id: 'dummy-1', name: 'VisionGuard 4K Ultra Pro', category: 'outdoor cameras', brand: 'VisionGuard',
+                price: '$199.99', originalPrice: '$249.99', affiliateLink: 'https://example.com',
+                imageUrl: '/hero-surveillance-home.png', description: 'Experience pure ultra-HD with the VisionGuard 4K Ultra Pro.',
+                features: ['4K resolution', 'Night Vision', 'Solar Powered']
+            },
+            {
+                id: 'dummy-2', name: 'Smart Doorbell Plus', category: 'doorbell cameras', brand: 'SecureHome',
+                price: '$99.99', originalPrice: '$129.99', affiliateLink: 'https://example.com',
+                imageUrl: '/hero-surveillance-home.png', description: 'See who is at exactly your door, anytime and anywhere.',
+                features: ['1080p Video', 'Two-Way Talk', 'Motion Zones']
+            },
+            {
+                id: 'dummy-3', name: 'Invisible Indoor Mini', category: 'indoor cameras', brand: 'VisionGuard',
+                price: '$49.99', originalPrice: '$69.99', affiliateLink: 'https://example.com',
+                imageUrl: '/hero-surveillance-home.png', description: 'Discreet indoor monitoring to protect what matters internally.',
+                features: ['Miniature Size', 'Cloud Storage']
+            }
+        ] as any[];
+    }
 
-    // Use only real database blogs
-    const blogs = dbBlogs;
+    if (!blogs || blogs.length === 0) {
+        blogs = [
+            {
+                id: 'b1', title_en: 'How to Choose the Best Outdoor Camera', category: 'guides', excerpt_en: 'A complete guide to outdoor cameras for 2026. What you should know before buying an outdoor camera system.',
+                slug: 'best-outdoor-camera', coverImage: '/hero-surveillance-home.png', author: { name: 'VisionGuard Editor' }, publishedAt: new Date().toISOString()
+            },
+            {
+                id: 'b2', title_en: 'VisionGuard 4K Ultra Review', category: 'reviews', excerpt_en: 'Is the 4K Ultra worth the price tag? We put it through rigorous testing to uncover its true capabilities.',
+                slug: 'visionguard-4k-review', coverImage: '/hero-surveillance-home.png', author: { name: 'VisionGuard Experts' }, publishedAt: new Date().toISOString()
+            },
+            {
+                id: 'b3', title_en: '5 Tips to Secure Your Wi-Fi Network', category: 'security-tips', excerpt_en: 'Stop hackers from accessing your cameras with these simple steps. Basic cyber-hygiene goes a long way.',
+                slug: 'wifi-security-tips', coverImage: '/hero-surveillance-home.png', author: { name: 'Security Analyst' }, publishedAt: new Date().toISOString()
+            }
+        ] as any[];
+    }
 
     // BreadcrumbList schema — root breadcrumb
     const breadcrumbJsonLd = {
@@ -45,12 +79,12 @@ export default async function HomePage() {
         ],
     };
 
-    // GEO + AEO: Homepage schema — tells AI "what this site IS" at the top level
     const homepageJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'WebPage',
-        name: 'VisionGuard - Travel Stories from the Land of Kings',
-        description: 'Your gateway to Rajasthan travel stories, destination guides, and insider tips. Discover Jaipur, Udaipur, Jaisalmer, Jodhpur, and more.',
+        name: 'Home Security & CCTV Cameras | VisionGuard',
+        description:
+            'A home security and surveillance platform for CCTV cameras, smart home security systems, and surveillance solutions.',
         url: 'https://www.VisionGuard.com/',
         inLanguage: 'en-IN',
         isPartOf: {
@@ -59,25 +93,18 @@ export default async function HomePage() {
             url: 'https://www.VisionGuard.com'
         },
         about: {
-            '@type': 'State',
-            name: 'Rajasthan',
-            containedInPlace: { '@type': 'Country', name: 'India' }
+            '@type': 'ComputerAndInternetTechnology',
+            name: 'Home security & surveillance',
         },
-        // GEO: Offers signal — AI engines understand this site provides travel guides
         mainEntity: {
-            '@type': 'TravelAction',
-            name: 'Explore Rajasthan',
-            description: 'Discover authentic travel stories, destination guides, desert safari tips, and cultural insights from Rajasthan, India.',
-            location: {
-                '@type': 'State',
-                name: 'Rajasthan',
-                containedInPlace: { '@type': 'Country', name: 'India' },
-            },
+            '@type': 'Service',
+            name: 'Home Security Guides & Camera Comparisons',
+            description: 'Buying guides, product reviews, and feature comparisons for CCTV and smart security devices.',
         },
-        // AEO: Speakable — voice assistants read the hero tagline
+        // AEO: Speakable — voice assistants read the hero headline
         speakable: {
             '@type': 'SpeakableSpecification',
-            cssSelector: ['h1', '.hero-subtitle', 'meta[name="description"]']
+            cssSelector: ['h1.hero-headline', 'meta[name="description"]']
         },
     };
 
@@ -91,7 +118,7 @@ export default async function HomePage() {
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageJsonLd) }}
             />
-            <HomePageClient destinations={destinationsWithCounts} blogs={blogs} />
+            <SecurityHomePageClient products={products} blogs={blogs} />
         </>
     );
 }

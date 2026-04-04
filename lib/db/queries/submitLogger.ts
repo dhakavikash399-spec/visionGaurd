@@ -1,7 +1,9 @@
 /**
  * Submit Performance Logger
  * 
- * Migrated from supabase.from('submit_logs') to db.execute()
+ * Client-safe logger that sends performance data to /api/submit-log.
+ * This avoids importing the db module (and `pg`) from client components,
+ * which would break the Turbopack build.
  * 
  * Usage:
  *   const logger = new SubmitLogger('submit', userId, userEmail);
@@ -10,8 +12,6 @@
  *   logger.endStage('base64_cleanup');
  *   await logger.save({ blogId, blogSlug, ... });
  */
-
-import { db } from '@/lib/db';
 
 interface StageEntry {
     name: string;
@@ -67,39 +67,30 @@ export class SubmitLogger {
         return Math.round(performance.now() - this.globalStart);
     }
 
-    /** Save the log entry to the database (non-blocking) */
+    /** Save the log entry via API (non-blocking, client-safe) */
     async save(options: SaveOptions = {}): Promise<void> {
         const totalDuration = this.getElapsed();
 
         try {
-            await db.execute(
-                `INSERT INTO submit_logs (
-                    user_id, user_email, blog_id, blog_slug, action,
-                    total_duration_ms, stages, payload_size_kb,
-                    content_word_count, images_count, orphaned_images_count,
-                    status, error_message
-                ) VALUES (
-                    $1::uuid, $2, $3, $4, $5,
-                    $6, $7::jsonb, $8,
-                    $9, $10, $11,
-                    $12, $13
-                )`,
-                [
-                    this.userId,
-                    this.userEmail,
-                    options.blogId || null,
-                    options.blogSlug || null,
-                    this.action,
-                    totalDuration,
-                    JSON.stringify(this.stages),
-                    options.payloadSizeKB || null,
-                    options.contentWordCount || null,
-                    options.imagesCount || null,
-                    options.orphanedImagesCount || null,
-                    options.status || 'success',
-                    options.errorMessage || null,
-                ]
-            );
+            await fetch('/api/submit-log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: this.userId,
+                    userEmail: this.userEmail,
+                    blogId: options.blogId || null,
+                    blogSlug: options.blogSlug || null,
+                    action: this.action,
+                    totalDurationMs: totalDuration,
+                    stages: this.stages,
+                    payloadSizeKB: options.payloadSizeKB || null,
+                    contentWordCount: options.contentWordCount || null,
+                    imagesCount: options.imagesCount || null,
+                    orphanedImagesCount: options.orphanedImagesCount || null,
+                    status: options.status || 'success',
+                    errorMessage: options.errorMessage || null,
+                }),
+            });
         } catch (err) {
             // Non-critical: don't break the submit flow for logging failures
             console.warn('[SubmitLogger] Failed to save log:', err);

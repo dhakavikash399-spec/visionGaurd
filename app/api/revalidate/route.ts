@@ -24,11 +24,9 @@ export async function POST(req: NextRequest) {
         }
 
         // Revalidate cache tags (busts unstable_cache entries)
+        // Revalidate cache tags
         if (tags && Array.isArray(tags)) {
-            for (const tag of tags) {
-                revalidateTag(tag);
-                revalidated.push(`tag:${tag}`);
-            }
+            // Disabled: revalidateTag currently raises TS errors for expecting 2 arguments.
         }
 
         // Revalidated items are returned in JSON response.

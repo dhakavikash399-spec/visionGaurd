@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * Interactions Queries (Likes + Comments) — Database Abstraction Layer
  * 
@@ -7,7 +5,7 @@
  * Uses db.query() / db.execute() instead of supabase.from()
  */
 
-import { db } from '@/lib/db';
+import { db } from '@/lib/db/router';
 
 // ─── Types ───────────────────────────────────────────────────────
 

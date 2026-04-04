@@ -3,10 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useLanguage } from './LanguageProvider';
 
 export default function Footer() {
-    const { t, mounted } = useLanguage();
     const [email, setEmail] = useState('');
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
@@ -16,7 +14,7 @@ export default function Footer() {
 
         if (!email || !email.includes('@')) {
             setStatus('error');
-            setMessage(t('Please enter a valid email.', 'कृपया वैध ईमेल दर्ज करें।'));
+            setMessage('Please enter a valid email.');
             return;
         }
 
@@ -32,24 +30,24 @@ export default function Footer() {
 
             if (data.error) {
                 setStatus('error');
-                setMessage(t('Something went wrong. Please try again.', 'कुछ गलत हो गया। कृपया पुन: प्रयास करें।'));
+                setMessage('Something went wrong. Please try again.');
             } else if (data.alreadySubscribed) {
                 setStatus('success');
-                setMessage(t('You are already subscribed!', 'आप पहले से ही सब्सक्राइब हैं!'));
+                setMessage('You are already subscribed!');
             } else {
                 setStatus('success');
-                setMessage(t('Thank you for subscribing!', 'सब्सक्राइब करने के लिए धन्यवाद!'));
+                setMessage('Thank you for subscribing!');
                 setEmail('');
             }
         } catch (err: any) {
             console.error('Newsletter error:', err);
             setStatus('error');
-            setMessage(t('Something went wrong. Please try again.', 'कुछ गलत हो गया। कृपया पुन: प्रयास करें।'));
+            setMessage('Something went wrong. Please try again.');
         }
     };
 
     return (
-        <footer className="bg-gray-800 text-white py-16 px-4">
+        <footer className="bg-[#050810] text-[#8fa0ba] py-16 px-4 border-t border-[#00d4ff]/10">
             <div className="max-w-7xl mx-auto">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
                     {/* Brand */}
@@ -62,13 +60,10 @@ export default function Footer() {
                                 height={40}
                                 className="h-10 w-auto"
                             />
-                            <span className="text-xl font-bold">{t('VisionGuard', 'कैमलथार')}</span>
+                            <span className="text-xl font-bold text-white">VisionGuard</span>
                         </div>
-                        <p className="text-gray-400 mb-6">
-                            {t(
-                                'Your ultimate guide to exploring the royal state of Rajasthan. Discover hidden gems, plan your trips, and share your stories.',
-                                'राजस्थान के शाही राज्य की खोज के लिए आपकी अंतिम गाइड।'
-                            )}
+                        <p className="text-[#8fa0ba] mb-6">
+                            Your ultimate guide to home security and smart surveillance. Discover advanced cameras, protect your space, and share your experiences.
                         </p>
                         <div className="flex gap-3">
                             <a
@@ -98,67 +93,67 @@ export default function Footer() {
 
                     {/* Quick Links */}
                     <div>
-                        <h4 className="font-semibold text-lg mb-6">{t('Quick Links', 'त्वरित लिंक')}</h4>
+                        <h4 className="font-semibold text-lg text-white mb-6">Quick Links</h4>
                         <div className="flex flex-col gap-3">
-                            <Link href="/" className="text-gray-400 hover:text-desert-gold transition-colors">
-                                {t('Home', 'होम')}
+                            <Link href="/" className="hover:text-[#00d4ff] hover:translate-x-1 transition-all">
+                                Home
                             </Link>
-                            <Link href="/blogs/" className="text-gray-400 hover:text-desert-gold transition-colors">
-                                {t('Travel Blogs', 'यात्रा ब्लॉग')}
+                            <Link href="/blogs/" className="hover:text-[#00d4ff] hover:translate-x-1 transition-all">
+                                Security Guides
                             </Link>
-                            <Link href="/destinations/" className="text-gray-400 hover:text-desert-gold transition-colors">
-                                {t('Destinations', 'स्थान')}
+                            <Link href="/products/" className="hover:text-[#00d4ff] hover:translate-x-1 transition-all">
+                                Cameras
                             </Link>
 
-                            <Link href="/about/" className="text-gray-400 hover:text-desert-gold transition-colors">
-                                {t('About Us', 'हमारे बारे में')}
+                            <Link href="/about/" className="hover:text-[#00d4ff] hover:translate-x-1 transition-all">
+                                About Us
                             </Link>
-                            <Link href="/contact/" className="text-gray-400 hover:text-desert-gold transition-colors">
-                                {t('Contact Us', 'संपर्क करें')}
+                            <Link href="/contact/" className="hover:text-[#00d4ff] hover:translate-x-1 transition-all">
+                                Contact Us
                             </Link>
-                            <Link href="/submit/" className="text-gray-400 hover:text-desert-gold transition-colors">
-                                {t('Submit Blog', 'ब्लॉग जमा करें')}
+                            <Link href="/submit/" className="hover:text-[#00d4ff] hover:translate-x-1 transition-all">
+                                Submit Guide
                             </Link>
                         </div>
                     </div>
 
-                    {/* Destinations */}
+                    {/* Resources */}
                     <div>
-                        <h4 className="font-semibold text-lg mb-6">{t('Top Destinations', 'शीर्ष स्थान')}</h4>
+                        <h4 className="font-semibold text-lg text-white mb-6">Top Categories</h4>
                         <div className="flex flex-col gap-3">
-                            <Link href="/destinations/jaipur/" className="text-gray-400 hover:text-desert-gold transition-colors">
-                                Jaipur
+                            <Link href="/products?category=Security%20Cameras" className="hover:text-[#00d4ff] hover:translate-x-1 transition-all">
+                                Security Cameras
                             </Link>
-                            <Link href="/destinations/udaipur/" className="text-gray-400 hover:text-desert-gold transition-colors">
-                                Udaipur
+                            <Link href="/products?category=Smart%20Locks" className="hover:text-[#00d4ff] hover:translate-x-1 transition-all">
+                                Smart Locks
                             </Link>
-                            <Link href="/destinations/jaisalmer/" className="text-gray-400 hover:text-desert-gold transition-colors">
-                                Jaisalmer
+                            <Link href="/products?category=Alarm%20Systems" className="hover:text-[#00d4ff] hover:translate-x-1 transition-all">
+                                Alarm Systems
                             </Link>
-                            <Link href="/destinations/jodhpur/" className="text-gray-400 hover:text-desert-gold transition-colors">
-                                Jodhpur
+                            <Link href="/products?category=Sensors" className="hover:text-[#00d4ff] hover:translate-x-1 transition-all">
+                                Safety Sensors
                             </Link>
                         </div>
                     </div>
 
                     {/* Newsletter */}
                     <div>
-                        <h4 className="font-semibold text-lg mb-6">{t('Newsletter', 'न्यूज़लेटर')}</h4>
-                        <p className="text-gray-400 mb-4">
-                            {t(
-                                'Get travel tips and updates delivered to your inbox.',
-                                'यात्रा टिप्स और अपडेट अपने इनबॉक्स में प्राप्त करें।'
-                            )}
+                        <h4 className="font-semibold text-lg text-white mb-6">Stay Updated</h4>
+                        <p className="mb-4 text-sm font-light">
+                            Get the latest security tips, reviews, and deals delivered to your inbox.
                         </p>
-                        <form onSubmit={handleSubscribe} className="flex gap-2">
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder={t('Your email', 'आपका ईमेल')}
-                                className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-desert-gold text-white"
-                                disabled={status === 'loading' || status === 'success'}
-                            />
+                        <form onSubmit={handleSubscribe} className="flex flex-col gap-2 relative">
+                            <div className="relative">
+                                <input
+                                    type="email"
+                                    placeholder="Your email address"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="w-full px-4 py-3 bg-[#111827] text-white rounded-lg border border-[#1f2937] focus:outline-none focus:border-[#00d4ff] focus:ring-1 focus:ring-[#00d4ff]/30 transition-all text-sm placeholder-gray-500"
+                                    required
+                                    disabled={status === 'loading'}
+                                />
+                            </div>
                             <button
                                 type="submit"
                                 disabled={status === 'loading' || status === 'success'}
@@ -169,7 +164,7 @@ export default function Footer() {
                                 ) : status === 'success' ? (
                                     <span className="text-xl">✓</span>
                                 ) : (
-                                    '→'
+                                    'Subscribe'
                                 )}
                             </button>
                         </form>
@@ -183,19 +178,19 @@ export default function Footer() {
 
                 {/* Bottom */}
                 <div className="pt-8 border-t border-gray-700 flex flex-col md:flex-row justify-between items-center gap-4 text-gray-500 text-sm">
-                    <p>{t('© 2026 VisionGuard. All rights reserved.', '© 2026 कैमलथार। सर्वाधिकार सुरक्षित।')}</p>
+                    <p>&copy; {new Date().getFullYear()} VisionGuard. All rights reserved.</p>
                     <div className="flex gap-6">
                         <Link href="/privacy-policy/" className="hover:text-desert-gold transition-colors">
-                            {t('Privacy Policy', 'गोपनीयता नीति')}
+                            Privacy Policy
                         </Link>
                         <Link href="/terms-of-service/" className="hover:text-desert-gold transition-colors">
-                            {t('Terms of Service', 'सेवा की शर्तें')}
+                            Terms of Service
                         </Link>
                         <Link href="/admin/" className="hover:text-desert-gold transition-colors text-xs font-semibold text-gray-400 flex items-center gap-1 mt-1">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
-                            {t('Admin Login', 'एडमिन लॉगिन')}
+                            Admin Login
                         </Link>
                     </div>
                 </div>

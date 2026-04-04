@@ -1,13 +1,27 @@
 'use client';
 
-import Link from 'next/link';
-import type { Product } from '@/lib/data';
+import type { AffiliateProduct } from '@/lib/db/queries/products';
 
 interface ProductCardProps {
-    product: Product;
+    product: AffiliateProduct;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+    const features = product.features ?? [];
+    const reviewCount = product.reviewCount ?? 0;
+    const rating = product.rating ?? 4.5;
+
+    const originalPrice = product.originalPrice ?? '';
+    const currentPrice = product.price ?? '';
+
+    const discountPct = (() => {
+        if (!originalPrice || !currentPrice) return null;
+        const o = parseInt(originalPrice.replace(/[^\d]/g, ''), 10);
+        const c = parseInt(currentPrice.replace(/[^\d]/g, ''), 10);
+        if (!Number.isFinite(o) || !Number.isFinite(c) || o <= 0 || c <= 0 || c >= o) return null;
+        return Math.round(((o - c) / o) * 100);
+    })();
+
     return (
         <div className="group glass-card overflow-hidden flex flex-col h-full">
             {/* Image Area */}
@@ -21,6 +35,16 @@ export default function ProductCard({ product }: ProductCardProps) {
                     </div>
                 </div>
 
+                {product.imageUrl ? (
+                    <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-500"
+                        loading="lazy"
+                        decoding="async"
+                    />
+                ) : null}
+
                 {/* Badge */}
                 {product.badge && (
                     <div className="absolute top-4 left-4">
@@ -31,10 +55,10 @@ export default function ProductCard({ product }: ProductCardProps) {
                 )}
 
                 {/* Discount */}
-                {product.originalPrice && (
+                {discountPct !== null && (
                     <div className="absolute top-4 right-4">
                         <span className="px-2 py-1 bg-[rgba(16,185,129,0.2)] border border-[rgba(16,185,129,0.3)] text-[#10b981] text-[10px] font-bold rounded-full">
-                            SAVE {Math.round(((parseInt(product.originalPrice.replace(/[^\d]/g, '')) - parseInt(product.price.replace(/[^\d]/g, ''))) / parseInt(product.originalPrice.replace(/[^\d]/g, ''))) * 100)}%
+                            SAVE {discountPct}%
                         </span>
                     </div>
                 )}
@@ -52,7 +76,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
                 {/* Features */}
                 <div className="flex flex-wrap gap-1.5 mb-4">
-                    {product.features.slice(0, 3).map((feature) => (
+                    {features.slice(0, 3).map((feature) => (
                         <span
                             key={feature}
                             className="px-2 py-0.5 text-[10px] font-medium bg-[rgba(0,212,255,0.06)] border border-[rgba(0,212,255,0.1)] text-[#94a3b8] rounded-md"
@@ -68,7 +92,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                         {[1, 2, 3, 4, 5].map((star) => (
                             <svg
                                 key={star}
-                                className={`w-3.5 h-3.5 ${star <= Math.floor(product.rating) ? 'text-[#f59e0b]' : 'text-[#334155]'}`}
+                                className={`w-3.5 h-3.5 ${star <= Math.floor(rating) ? 'text-[#f59e0b]' : 'text-[#334155]'}`}
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                             >
@@ -76,16 +100,18 @@ export default function ProductCard({ product }: ProductCardProps) {
                             </svg>
                         ))}
                     </div>
-                    <span className="text-[#64748b] text-xs">{product.rating} ({product.reviewCount.toLocaleString()})</span>
+                    <span className="text-[#64748b] text-xs">
+                        {rating} ({reviewCount.toLocaleString()})
+                    </span>
                 </div>
 
                 {/* Price */}
                 <div className="flex items-center justify-between mt-auto">
                     <div className="flex items-center gap-2">
                         <span className="text-xl font-bold text-[#00d4ff]">{product.price}</span>
-                        {product.originalPrice && (
+                        {product.originalPrice ? (
                             <span className="text-sm text-[#475569] line-through">{product.originalPrice}</span>
-                        )}
+                        ) : null}
                     </div>
                     <a
                         href={product.affiliateLink}

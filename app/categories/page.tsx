@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import Link from 'next/link';
-import { productCategories, products } from '@/lib/data';
+import { fetchProducts } from '@/lib/db/queries/products';
 import ProductCard from '@/components/ProductCard';
 
 export const metadata: Metadata = {
@@ -8,7 +8,16 @@ export const metadata: Metadata = {
     description: 'Browse security cameras, video doorbells, NVR systems, smart locks, sensors, and accessories by category.',
 };
 
-export default function CategoriesPage() {
+const productCategories = [
+    { id: 'security-cameras', name: 'Security Cameras', icon: '📹', description: 'Indoor and outdoor cameras for complete property monitoring.' },
+    { id: 'smart-locks', name: 'Smart Locks', icon: '🔐', description: 'Advanced protection for your doors with keyless entry.' },
+    { id: 'video-doorbells', name: 'Video Doorbells', icon: '🛎️', description: 'See who is at the door from anywhere in the world.' },
+    { id: 'alarm-systems', name: 'Alarm Systems', icon: '🚨', description: 'Full property protection with motion and entry sensors.' },
+    { id: 'accessories', name: 'Accessories', icon: '🔌', description: 'Mounts, cables, and storage for your security setup.' },
+];
+
+export default async function CategoriesPage() {
+    const products = await fetchProducts();
     return (
         <div className="min-h-screen pt-24 pb-20 px-4">
             <div className="max-w-7xl mx-auto">

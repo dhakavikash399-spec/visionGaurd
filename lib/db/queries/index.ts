@@ -100,8 +100,8 @@ export {
     updateRequestStatus,
     checkExistingRequest,
     getActivePlanCount,
-} from './VisionGuardMate';
-export type { VisionGuardMatePlan, VisionGuardMateRequest } from './VisionGuardMate';
+} from './tharmate';
+export type { VisionGuardMatePlan, VisionGuardMateRequest } from './tharmate';
 
 // Destinations
 export {

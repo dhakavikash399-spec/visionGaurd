@@ -6,12 +6,11 @@ import { isAdmin as checkIsAdmin, getAdminStats, fetchBlogsByStatus } from '@/li
 import { approveBlog, rejectBlog, deleteBlog } from '@/lib/db/queries/blogs';
 import AdminLogin from '@/components/AdminLogin';
 import ProfileHeader from '@/components/ProfileHeader';
-import { useLanguage } from '@/components/LanguageProvider';
 import Link from 'next/link';
-import { uploadProductImage, uploadDestinationImage } from '@/lib/upload';
+import { uploadProductImage } from '@/lib/upload';
 
 type BlogStatus = 'pending' | 'published' | 'rejected' | 'draft';
-type MainTab = 'blogs' | 'products' | 'messages' | 'database' | 'destinations';
+type MainTab = 'blogs' | 'products' | 'messages';
 
 import {
     fetchAllProductsForAdmin,
@@ -23,19 +22,9 @@ import {
     fetchContactMessages,
     updateMessageStatus
 } from '@/lib/db/queries/contact';
-import {
-    fetchDestinations,
-    createDestination,
-    updateDestination,
-    deleteDestination
-} from '@/lib/db/queries/destinations';
-import { AffiliateProduct } from '@/app/essentials/EssentialsContent';
-import { Destination } from '@/lib/data';
-import { triggerReconciliationAction } from '@/lib/actions/db-sync';
-import { SyncResult } from '@/lib/db/reconciliation';
+import type { AffiliateProduct } from '@/lib/db/queries/products';
 
 export default function AdminPage() {
-    const { t } = useLanguage();
     const { data: session, status: sessionStatus } = useSession();
     const [authenticated, setAuthenticated] = useState(false);
     const [user, setUser] = useState<any>(null);
@@ -54,23 +43,6 @@ export default function AdminPage() {
     });
     const [processing, setProcessing] = useState<string | null>(null);
 
-    // Destinations State
-    const [destinations, setDestinations] = useState<Destination[]>([]);
-    const [showDestinationModal, setShowDestinationModal] = useState(false);
-    const [editingDestination, setEditingDestination] = useState<Destination | null>(null);
-    const [destinationForm, setDestinationForm] = useState<Omit<Destination, 'blogCount'>>({
-        id: '',
-        name_en: '',
-        name_hi: '',
-        tagline_en: '',
-        tagline_hi: '',
-        description_en: '',
-        description_hi: '',
-        coverImage: '',
-        attractions: [],
-        bestTime: '',
-        imageCredits: { name: '', url: '' },
-    });
     const [showProductModal, setShowProductModal] = useState(false);
     const [editingProduct, setEditingProduct] = useState<AffiliateProduct | null>(null);
     const [productForm, setProductForm] = useState<Omit<AffiliateProduct, 'id'>>({
@@ -80,27 +52,22 @@ export default function AdminPage() {
         imageUrl: '',
         affiliateLink: '',
         destinations: [],
+        features: [],
+        category: '',
+        originalPrice: '',
+        rating: 4.5,
+        reviewCount: 0,
+        badge: '',
         isActive: true,
     });
     const [imageUploading, setImageUploading] = useState(false);
     const [imageUploadProgress, setImageUploadProgress] = useState(0);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const productImageInputRef = useRef<HTMLInputElement>(null);
-    const destinationImageInputRef = useRef<HTMLInputElement>(null);
-
-    // Destination image upload state
-    const [destImageUploading, setDestImageUploading] = useState(false);
-    const [destImageUploadProgress, setDestImageUploadProgress] = useState(0);
-    const [destImagePreview, setDestImagePreview] = useState<string | null>(null);
-
-    // Database Sync State
-    const [isSyncing, setIsSyncing] = useState(false);
-    const [syncResults, setSyncResults] = useState<SyncResult[]>([]);
-    const [syncError, setSyncError] = useState<string | null>(null);
 
     // Check admin access via NextAuth session
     useEffect(() => {
-        if (sessionStatus === 'loading') return;
+        if (status === 'loading') return;
         const sessionUser = session?.user as any;
 
         const verifyAdmin = async () => {
@@ -117,7 +84,7 @@ export default function AdminPage() {
 
         verifyAdmin();
         setLoading(false);
-    }, [sessionStatus, session]);
+    }, [status, session]);
 
     useEffect(() => {
         if (authenticated) {
@@ -128,8 +95,6 @@ export default function AdminPage() {
                 loadProducts();
             } else if (authenticated && mainTab === 'messages') {
                 loadMessages();
-            } else if (authenticated && mainTab === 'destinations') {
-                loadDestinations();
             }
         }
     }, [authenticated, mainTab, activeTab]);
@@ -152,11 +117,6 @@ export default function AdminPage() {
     const loadMessages = async () => {
         const messagesData = await fetchContactMessages();
         setMessages(messagesData);
-    };
-
-    const loadDestinations = async () => {
-        const data = await fetchDestinations();
-        setDestinations(data);
     };
 
     const handleUpdateMessageStatus = async (id: string, status: string) => {
@@ -216,6 +176,12 @@ export default function AdminPage() {
                 imageUrl: '',
                 affiliateLink: '',
                 destinations: [],
+                features: [],
+                category: '',
+                originalPrice: '',
+                rating: 4.5,
+                reviewCount: 0,
+                badge: '',
                 isActive: true,
             });
             setImagePreview(null);
@@ -250,6 +216,12 @@ export default function AdminPage() {
             imageUrl: product.imageUrl,
             affiliateLink: product.affiliateLink,
             destinations: product.destinations,
+            features: product.features || [],
+            category: product.category || '',
+            originalPrice: product.originalPrice || '',
+            rating: typeof product.rating === 'number' ? product.rating : 4.5,
+            reviewCount: typeof product.reviewCount === 'number' ? product.reviewCount : 0,
+            badge: product.badge || '',
             isActive: product.isActive,
         });
         setImagePreview(product.imageUrl || null);
@@ -264,18 +236,18 @@ export default function AdminPage() {
                 await loadBlogs();
                 await loadStats();
             } else {
-                alert(t('Failed to approve blog', 'ब्लॉग को मंजूरी देने में विफल'));
+                alert('Failed to approve blog');
             }
         } catch (error) {
             console.error('Error approving blog:', error);
-            alert(t('An error occurred', 'एक त्रुटि हुई'));
+            alert('An error occurred');
         } finally {
             setProcessing(null);
         }
     };
 
     const handleReject = async (blogId: string) => {
-        if (!confirm(t('Are you sure you want to reject this blog?', 'क्या आप वाकई इस ब्लॉग को अस्वीकार करना चाहते हैं?'))) {
+        if (!confirm('Are you sure you want to reject this blog?')) {
             return;
         }
 
@@ -286,21 +258,18 @@ export default function AdminPage() {
                 await loadBlogs();
                 await loadStats();
             } else {
-                alert(t('Failed to reject blog', 'ब्लॉग को अस्वीकार करने में विफल'));
+                alert('Failed to reject blog');
             }
         } catch (error) {
             console.error('Error rejecting blog:', error);
-            alert(t('An error occurred', 'एक त्रुटि हुई'));
+            alert('An error occurred');
         } finally {
             setProcessing(null);
         }
     };
 
     const handleDeleteBlog = async (blogId: string, blogTitle: string) => {
-        if (!confirm(t(
-            `Are you sure you want to PERMANENTLY DELETE this blog?\n\n"${blogTitle}"\n\nThis action cannot be undone!`,
-            `क्या आप वाकई इस ब्लॉग को स्थायी रूप से हटाना चाहते हैं?\n\n"${blogTitle}"\n\nयह क्रिया पूर्ववत नहीं की जा सकती!`
-        ))) {
+        if (!confirm(`Are you sure you want to PERMANENTLY DELETE this blog?\n\n"${blogTitle}"\n\nThis action cannot be undone!`)) {
             return;
         }
 
@@ -311,11 +280,11 @@ export default function AdminPage() {
                 await loadBlogs();
                 await loadStats();
             } else {
-                alert(t('Failed to delete blog', 'ब्लॉग को हटाने में विफल') + ': ' + result.error);
+                alert('Failed to delete blog: ' + result.error);
             }
         } catch (error) {
             console.error('Error deleting blog:', error);
-            alert(t('An error occurred', 'एक त्रुटि हुई'));
+            alert('An error occurred');
         } finally {
             setProcessing(null);
         }
@@ -334,129 +303,42 @@ export default function AdminPage() {
         });
     };
 
-    const handleDestinationImageUpload = async (file: File) => {
-        setDestImageUploading(true);
-        setDestImageUploadProgress(0);
-        try {
-            const url = await uploadDestinationImage(file, (percent) => {
-                setDestImageUploadProgress(percent);
-            });
-            setDestinationForm(prev => ({ ...prev, coverImage: url }));
-            setDestImagePreview(url);
-        } catch (error: any) {
-            alert('Image upload failed: ' + (error.message || 'Unknown error'));
-        } finally {
-            setDestImageUploading(false);
-            setDestImageUploadProgress(0);
-        }
-    };
-
-    const handleDestinationSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!destinationForm.coverImage) {
-            alert('Please upload a cover image first.');
-            return;
-        }
-        setProcessing('destination-form');
-        try {
-            if (editingDestination) {
-                const { error } = await updateDestination(editingDestination.id, destinationForm);
-                if (error) throw new Error(error);
-            } else {
-                const { error } = await createDestination(destinationForm);
-                if (error) throw new Error(error);
-            }
-            setShowDestinationModal(false);
-            setEditingDestination(null);
-            setDestImagePreview(null);
-            await loadDestinations();
-        } catch (error: any) {
-            alert(error.message || 'Error saving destination');
-        } finally {
-            setProcessing(null);
-        }
-    };
-
-    const handleDeleteDestination = async (id: string) => {
-        if (!confirm(`Are you sure you want to delete ${id}?`)) return;
-        setProcessing(id);
-        try {
-            const { error } = await deleteDestination(id);
-            if (error) throw new Error(error);
-            await loadDestinations();
-        } catch (error: any) {
-            alert(error.message || 'Error deleting destination');
-        } finally {
-            setProcessing(null);
-        }
-    };
-
-    const openEditDestination = (dest: Destination) => {
-        setEditingDestination(dest);
-        setDestinationForm({
-            id: dest.id,
-            name_en: dest.name_en,
-            name_hi: dest.name_hi,
-            tagline_en: dest.tagline_en,
-            tagline_hi: dest.tagline_hi,
-            description_en: dest.description_en,
-            description_hi: dest.description_hi,
-            coverImage: dest.coverImage,
-            attractions: dest.attractions,
-            bestTime: dest.bestTime,
-            imageCredits: dest.imageCredits || { name: '', url: '' },
-        });
-        setDestImagePreview(dest.coverImage || null);
-        setShowDestinationModal(true);
-    };
-
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-                <div className="text-white text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-                    <p>{t('Loading...', 'लोड हो रहा है...')}</p>
-                </div>
-            </div>
-        );
-    }
-
     if (!authenticated) {
         return <AdminLogin onLoginSuccess={() => setAuthenticated(true)} />;
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="min-h-screen bg-[#0a0e17]">
             {/* Header */}
-            <div className="bg-white/10 backdrop-blur-lg border-b border-white/20 pt-20">
-                <div className="max-w-7xl mx-auto px-4 py-6">
+            <div className="bg-[#0f172a]/50 backdrop-blur-xl border-b border-white/5 pt-10">
+                <div className="max-w-7xl mx-auto px-4 py-8">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-white mb-2">
-                                {t('Admin Dashboard', 'व्यवस्थापक डैशबोर्ड')}
+                            <h1 className="text-4xl font-black text-white tracking-tight mb-2">
+                                Admin <span className="text-[#00d4ff]">Dashboard</span>
                             </h1>
-                            <p className="text-gray-300">
-                                {t('Manage blog submissions', 'ब्लॉग सबमिशन प्रबंधित करें')}
+                            <p className="text-gray-400 font-medium">
+                                System management and content control panel.
                             </p>
                         </div>
                         <div className="flex items-center gap-4">
                             <Link
                                 href="/submit"
-                                className="px-4 py-2 bg-desert-gold hover:bg-desert-gold/90 text-white rounded-lg transition-all font-bold"
+                                className="px-5 py-2.5 bg-[#00d4ff] hover:bg-[#00d4ff]/90 text-[#0a0e17] rounded-xl transition-all font-bold shadow-lg shadow-[#00d4ff]/20"
                             >
-                                {t('Create New Blog', 'नया ब्लॉग बनाएं')}
+                                Create New Blog
                             </Link>
                             <Link
                                 href="/"
-                                className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all"
+                                className="px-5 py-2.5 bg-white/5 hover:bg-white/10 text-white rounded-xl border border-white/10 transition-all font-medium"
                             >
-                                {t('View Site', 'साइट देखें')}
+                                View Website ↗
                             </Link>
                             <button
                                 onClick={handleLogout}
-                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all"
+                                className="px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-500 rounded-xl border border-red-500/20 transition-all font-bold"
                             >
-                                {t('Logout', 'लॉगआउट')}
+                                Logout
                             </button>
                         </div>
                     </div>
@@ -476,41 +358,27 @@ export default function AdminPage() {
 
             {/* Main Tabs */}
             <div className="max-w-7xl mx-auto px-4 mt-6">
-                <div className="flex bg-white/10 p-1 rounded-xl border border-white/20 w-fit">
+                <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 w-fit">
                     <button
                         onClick={() => setMainTab('blogs')}
-                        className={`px-6 py-2 rounded-lg font-bold transition-all ${mainTab === 'blogs' ? 'bg-white text-gray-900 shadow-lg' : 'text-white hover:bg-white/10'
+                        className={`px-6 py-2 rounded-lg font-bold transition-all ${mainTab === 'blogs' ? 'bg-[#00d4ff] text-[#0a0e17] shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
-                        {t('Blogs', 'ब्लॉग')}
+                        Blogs
                     </button>
                     <button
                         onClick={() => setMainTab('products')}
-                        className={`px-6 py-2 rounded-lg font-bold transition-all ${mainTab === 'products' ? 'bg-white text-gray-900 shadow-lg' : 'text-white hover:bg-white/10'
+                        className={`px-6 py-2 rounded-lg font-bold transition-all ${mainTab === 'products' ? 'bg-[#00d4ff] text-[#0a0e17] shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
-                        {t('Products', 'उत्पाद')}
+                        Products
                     </button>
                     <button
                         onClick={() => setMainTab('messages')}
-                        className={`px-6 py-2 rounded-lg font-bold transition-all ${mainTab === 'messages' ? 'bg-white text-gray-900 shadow-lg' : 'text-white hover:bg-white/10'
+                        className={`px-6 py-2 rounded-lg font-bold transition-all ${mainTab === 'messages' ? 'bg-[#00d4ff] text-[#0a0e17] shadow-lg' : 'text-gray-400 hover:text-white hover:bg-white/5'
                             }`}
                     >
-                        {t('Messages', 'संदेश')}
-                    </button>
-                    <button
-                        onClick={() => setMainTab('destinations')}
-                        className={`px-6 py-2 rounded-lg font-bold transition-all ${mainTab === 'destinations' ? 'bg-white text-gray-900 shadow-lg' : 'text-white hover:bg-white/10'
-                            }`}
-                    >
-                        {t('Destinations', 'स्थान')}
-                    </button>
-                    <button
-                        onClick={() => setMainTab('database')}
-                        className={`px-6 py-2 rounded-lg font-bold transition-all ${mainTab === 'database' ? 'bg-white text-gray-900 shadow-lg' : 'text-white hover:bg-white/10'
-                            }`}
-                    >
-                        {t('Database', 'डेटाबेस')}
+                        Messages
                     </button>
                 </div>
             </div>
@@ -520,45 +388,41 @@ export default function AdminPage() {
                     {/* Stats */}
                     <div className="max-w-7xl mx-auto px-4 py-6">
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-                            <div className="bg-white/10 backdrop-blur-lg rounded-lg p-4 border border-white/20">
-                                <div className="text-gray-300 text-sm mb-1">{t('Total', 'कुल')}</div>
-                                <div className="text-2xl font-bold text-white">{stats.total}</div>
+                            <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-5 border border-white/10">
+                                <div className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-1">Total Content</div>
+                                <div className="text-3xl font-black text-white">{stats.total}</div>
                             </div>
-                            <div className="bg-yellow-500/20 backdrop-blur-lg rounded-lg p-4 border border-yellow-500/30">
-                                <div className="text-yellow-200 text-sm mb-1">{t('Pending', 'लंबित')}</div>
-                                <div className="text-2xl font-bold text-yellow-300">{stats.pending}</div>
+                            <div className="bg-yellow-500/5 backdrop-blur-lg rounded-2xl p-5 border border-yellow-500/20">
+                                <div className="text-yellow-500/50 text-[10px] font-bold uppercase tracking-widest mb-1">Pending Review</div>
+                                <div className="text-3xl font-black text-yellow-500">{stats.pending}</div>
                             </div>
-                            <div className="bg-green-500/20 backdrop-blur-lg rounded-lg p-4 border border-green-500/30">
-                                <div className="text-green-200 text-sm mb-1">{t('Published', 'प्रकाशित')}</div>
-                                <div className="text-2xl font-bold text-green-300">{stats.published}</div>
+                            <div className="bg-[#00d4ff]/5 backdrop-blur-lg rounded-2xl p-5 border border-[#00d4ff]/20">
+                                <div className="text-[#00d4ff]/50 text-[10px] font-bold uppercase tracking-widest mb-1">Live Guides</div>
+                                <div className="text-3xl font-black text-[#00d4ff]">{stats.published}</div>
                             </div>
-                            <div className="bg-red-500/20 backdrop-blur-lg rounded-lg p-4 border border-red-500/30">
-                                <div className="text-red-200 text-sm mb-1">{t('Rejected', 'अस्वीकृत')}</div>
-                                <div className="text-2xl font-bold text-red-300">{stats.rejected}</div>
+                            <div className="bg-red-500/5 backdrop-blur-lg rounded-2xl p-5 border border-red-500/20">
+                                <div className="text-red-500/50 text-[10px] font-bold uppercase tracking-widest mb-1">Rejected</div>
+                                <div className="text-3xl font-black text-red-500">{stats.rejected}</div>
                             </div>
-                            <div className="bg-gray-500/20 backdrop-blur-lg rounded-lg p-4 border border-gray-500/30">
-                                <div className="text-gray-200 text-sm mb-1">{t('Draft', 'ड्राफ्ट')}</div>
-                                <div className="text-2xl font-bold text-gray-300">{stats.draft}</div>
+                            <div className="bg-gray-500/5 backdrop-blur-lg rounded-2xl p-5 border border-gray-500/20">
+                                <div className="text-gray-500/50 text-[10px] font-bold uppercase tracking-widest mb-1">Drafts</div>
+                                <div className="text-3xl font-black text-gray-400">{stats.draft}</div>
                             </div>
                         </div>
 
                         {/* Tabs */}
-                        <div className="bg-white/10 backdrop-blur-lg rounded-lg p-1 mb-6 border border-white/20">
+                        <div className="bg-white/5 backdrop-blur-lg rounded-xl p-1.5 mb-8 border border-white/10 w-fit">
                             <div className="flex gap-2">
                                 {(['pending', 'published', 'rejected', 'draft'] as BlogStatus[]).map((tab) => (
                                     <button
                                         key={tab}
                                         onClick={() => setActiveTab(tab)}
-                                        className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all ${activeTab === tab
-                                            ? 'bg-white text-gray-900'
-                                            : 'text-white hover:bg-white/10'
+                                        className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${activeTab === tab
+                                            ? 'bg-[#00d4ff] text-[#0a0e17]'
+                                            : 'text-gray-400 hover:text-white hover:bg-white/5'
                                             }`}
                                     >
-                                        {t(
-                                            tab.charAt(0).toUpperCase() + tab.slice(1),
-                                            tab === 'pending' ? 'लंबित' : tab === 'published' ? 'प्रकाशित' : tab === 'rejected' ? 'अस्वीकृत' : 'ड्राफ्ट'
-                                        )}{' '}
-                                        ({tab === 'pending' ? stats.pending : tab === 'published' ? stats.published : tab === 'rejected' ? stats.rejected : stats.draft})
+                                        {tab} ({tab === 'pending' ? stats.pending : tab === 'published' ? stats.published : tab === 'rejected' ? stats.rejected : stats.draft})
                                     </button>
                                 ))}
                             </div>
@@ -569,7 +433,7 @@ export default function AdminPage() {
                             {blogs.length === 0 ? (
                                 <div className="bg-white/10 backdrop-blur-lg rounded-lg p-12 text-center border border-white/20">
                                     <p className="text-gray-300 text-lg">
-                                        {t('No blogs found', 'कोई ब्लॉग नहीं मिला')}
+                                        No blogs found
                                     </p>
                                 </div>
                             ) : (
@@ -608,82 +472,82 @@ export default function AdminPage() {
                                                     </span>
                                                 </div>
 
-                                                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 mb-4">
-                                                    <span>{t('Category', 'श्रेणी')}: {blog.category}</span>
-                                                    <span>{t('Destination', 'स्थान')}: {blog.destination || 'N/A'}</span>
-                                                    <span>
-                                                        {t('Created', 'बनाया गया')}: {new Date(blog.created_at).toLocaleDateString()}
-                                                    </span>
-                                                    {blog.author && (
+                                                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400 mb-4">
+                                                        <span>Category: {blog.category}</span>
+                                                        <span>Tag: {blog.destination || 'N/A'}</span>
                                                         <span>
-                                                            {t('Author', 'लेखक')}: {typeof blog.author === 'object' ? blog.author.name : 'Unknown'}
+                                                            Created: {new Date(blog.created_at).toLocaleDateString()}
                                                         </span>
-                                                    )}
-                                                </div>
+                                                        {blog.author && (
+                                                            <span>
+                                                                Author: {typeof blog.author === 'object' ? blog.author.name : 'Unknown'}
+                                                            </span>
+                                                        )}
+                                                    </div>
 
                                                 {/* Actions */}
                                                 {activeTab === 'pending' && (
                                                     <div className="flex flex-wrap gap-3">
-                                                        <button
-                                                            onClick={() => handleApprove(blog.id)}
-                                                            disabled={processing === blog.id}
-                                                            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        >
-                                                            {processing === blog.id ? t('Processing...', 'प्रसंस्करण...') : t('Approve', 'मंजूरी दें')}
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleReject(blog.id)}
-                                                            disabled={processing === blog.id}
-                                                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        >
-                                                            {t('Reject', 'अस्वीकार करें')}
-                                                        </button>
-                                                        <Link
-                                                            href={`/blogs/${blog.slug || blog.id}/`}
-                                                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all"
-                                                        >
-                                                            {t('View', 'देखें')}
-                                                        </Link>
-                                                        <button
-                                                            onClick={() => handleDeleteBlog(blog.id, blog.title_en)}
-                                                            disabled={processing === blog.id}
-                                                            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        >
-                                                            {t('Delete', 'हटाएं')}
-                                                        </button>
-                                                    </div>
-                                                )}
-
-                                                {activeTab !== 'pending' && (
-                                                    <div className="flex flex-wrap gap-3">
-                                                        <Link
-                                                            href={`/blogs/${blog.slug || blog.id}/`}
-                                                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all"
-                                                        >
-                                                            {t('View', 'देखें')}
-                                                        </Link>
-                                                        <Link
-                                                            href={`/edit/${blog.slug || blog.id}`}
-                                                            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-all"
-                                                        >
-                                                            {t('Edit', 'संपादित करें')}
-                                                        </Link>
-                                                        {activeTab === 'rejected' && (
                                                             <button
                                                                 onClick={() => handleApprove(blog.id)}
                                                                 disabled={processing === blog.id}
                                                                 className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                                             >
-                                                                {t('Approve', 'मंजूरी दें')}
+                                                                {processing === blog.id ? 'Processing...' : 'Approve'}
                                                             </button>
-                                                        )}
-                                                        <button
-                                                            onClick={() => handleDeleteBlog(blog.id, blog.title_en)}
-                                                            disabled={processing === blog.id}
-                                                            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                                        >
-                                                            {t('Delete', 'हटाएं')}
-                                                        </button>
+                                                            <button
+                                                                onClick={() => handleReject(blog.id)}
+                                                                disabled={processing === blog.id}
+                                                                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            >
+                                                                Reject
+                                                            </button>
+                                                            <Link
+                                                                href={`/blogs/${blog.slug || blog.id}/`}
+                                                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all"
+                                                            >
+                                                                View
+                                                            </Link>
+                                                            <button
+                                                                onClick={() => handleDeleteBlog(blog.id, blog.title_en)}
+                                                                disabled={processing === blog.id}
+                                                                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                    </div>
+                                                )}
+
+                                                {activeTab !== 'pending' && (
+                                                    <div className="flex flex-wrap gap-3">
+                                                            <Link
+                                                                href={`/blogs/${blog.slug || blog.id}/`}
+                                                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all"
+                                                            >
+                                                                View
+                                                            </Link>
+                                                            <Link
+                                                                href={`/edit/${blog.slug || blog.id}`}
+                                                                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-semibold transition-all"
+                                                            >
+                                                                Edit
+                                                            </Link>
+                                                            {activeTab === 'rejected' && (
+                                                                <button
+                                                                    onClick={() => handleApprove(blog.id)}
+                                                                    disabled={processing === blog.id}
+                                                                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                >
+                                                                    Approve
+                                                                </button>
+                                                            )}
+                                                            <button
+                                                                onClick={() => handleDeleteBlog(blog.id, blog.title_en)}
+                                                                disabled={processing === blog.id}
+                                                                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            >
+                                                                Delete
+                                                            </button>
                                                     </div>
                                                 )}
                                             </div>
@@ -699,7 +563,7 @@ export default function AdminPage() {
             {mainTab === 'products' && (
                 <div className="max-w-7xl mx-auto px-4 py-6">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-white">{t('Manage Affiliate Products', 'एफिलिएट उत्पाद प्रबंधित करें')}</h2>
+                        <h2 className="text-2xl font-bold text-white">Manage Affiliate Products</h2>
                         <button
                             onClick={() => {
                                 setEditingProduct(null);
@@ -715,16 +579,16 @@ export default function AdminPage() {
                                 setImagePreview(null);
                                 setShowProductModal(true);
                             }}
-                            className="px-6 py-2 bg-desert-gold hover:bg-desert-gold/90 text-white font-bold rounded-lg transition-all"
+                            className="px-6 py-2 bg-[#00d4ff] hover:bg-[#00d4ff]/90 text-[#0a0e17] font-bold rounded-lg transition-all shadow-lg shadow-[#00d4ff]/10"
                         >
-                            {t('Add New Product', 'नया उत्पाद जोड़ें')}
+                            Add New Product
                         </button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {products.length === 0 ? (
                             <div className="col-span-full py-12 text-center bg-white/10 rounded-xl border border-white/20">
-                                <p className="text-gray-300">{t('No products found', 'कोई उत्पाद नहीं मिला')}</p>
+                                <p className="text-gray-300">No products found</p>
                             </div>
                         ) : (
                             products.map((product) => (
@@ -756,16 +620,16 @@ export default function AdminPage() {
                                         <div className="flex gap-2">
                                             <button
                                                 onClick={() => openEditProduct(product)}
-                                                className="flex-1 py-2 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold rounded-lg transition-all"
+                                                className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-lg transition-all border border-white/10"
                                             >
-                                                {t('Edit', 'संपादित करें')}
+                                                Edit
                                             </button>
                                             <button
                                                 onClick={() => handleDeleteProduct(product.id)}
                                                 disabled={processing === product.id}
-                                                className="flex-1 py-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 text-sm font-semibold rounded-lg transition-all disabled:opacity-50"
+                                                className="flex-1 py-2 bg-red-600/10 hover:bg-red-600/20 text-red-400 text-sm font-semibold rounded-lg transition-all border border-red-500/10"
                                             >
-                                                {t('Delete', 'हटाएं')}
+                                                Delete
                                             </button>
                                         </div>
                                     </div>
@@ -779,13 +643,13 @@ export default function AdminPage() {
             {mainTab === 'messages' && (
                 <div className="max-w-7xl mx-auto px-4 py-6">
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-white">{t('Contact Messages', 'संपर्क संदेश')}</h2>
+                        <h2 className="text-2xl font-bold text-white">Contact Messages</h2>
                         <button
                             onClick={loadMessages}
                             className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-all flex items-center gap-2"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                            {t('Refresh', 'रीफ्रेश')}
+                            Refresh
                         </button>
                     </div>
 
@@ -793,7 +657,7 @@ export default function AdminPage() {
                         {messages.length === 0 ? (
                             <div className="bg-white/10 backdrop-blur-lg rounded-lg p-12 text-center border border-white/20">
                                 <p className="text-gray-300 text-lg">
-                                    {t('No messages found', 'कोई संदेश नहीं मिला')}
+                                    No messages found
                                 </p>
                             </div>
                         ) : (
@@ -813,8 +677,8 @@ export default function AdminPage() {
                                                 </span>
                                             </div>
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-1 text-sm text-gray-400 mb-4">
-                                                <p><span className="text-gray-500">{t('From', 'से')}:</span> <span className="text-white">{msg.name}</span> ({msg.email})</p>
-                                                <p><span className="text-gray-500">{t('Date', 'तारीख')}:</span> {new Date(msg.created_at).toLocaleString()}</p>
+                                                <p><span className="text-gray-500">From:</span> <span className="text-white">{msg.name}</span> ({msg.email})</p>
+                                                <p><span className="text-gray-500">Date:</span> {new Date(msg.created_at).toLocaleString()}</p>
                                             </div>
                                             <div className="bg-black/20 rounded-lg p-4 text-gray-200 whitespace-pre-wrap italic border border-white/5">
                                                 "{msg.message}"
@@ -827,589 +691,27 @@ export default function AdminPage() {
                                                     disabled={processing === msg.id}
                                                     className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
                                                 >
-                                                    {t('Mark as Read', 'पढ़ा हुआ मानों')}
+                                                    Mark as Read
                                                 </button>
                                             ) : (
                                                 <button
                                                     onClick={() => handleUpdateMessageStatus(msg.id, 'new')}
                                                     disabled={processing === msg.id}
-                                                    className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
+                                                    className="px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg text-sm font-semibold transition-all border border-white/10"
                                                 >
-                                                    {t('Mark as Unread', 'बिना पढ़ा हुआ मानों')}
+                                                    Mark as Unread
                                                 </button>
                                             )}
                                             <a
                                                 href={`mailto:${msg.email}?subject=Re: ${msg.subject}`}
-                                                className="px-4 py-2 bg-royal-blue hover:bg-royal-blue/80 text-white rounded-lg text-sm font-semibold transition-all text-center"
+                                                className="px-4 py-2 bg-[#00d4ff] hover:bg-[#00d4ff]/90 text-[#0a0e17] rounded-lg text-sm font-bold transition-all text-center"
                                             >
-                                                {t('Reply via Email', 'ईमेल से जवाब दें')}
+                                                Reply via Email
                                             </a>
                                         </div>
                                     </div>
                                 </div>
                             ))
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {mainTab === 'destinations' && (
-                <div className="max-w-7xl mx-auto px-4 py-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-white">{t('Manage Destinations', 'स्थान प्रबंधित करें')}</h2>
-                        <button
-                            onClick={() => {
-                                setEditingDestination(null);
-                                setDestinationForm({
-                                    id: '',
-                                    name_en: '',
-                                    name_hi: '',
-                                    tagline_en: '',
-                                    tagline_hi: '',
-                                    description_en: '',
-                                    description_hi: '',
-                                    coverImage: '',
-                                    attractions: [],
-                                    bestTime: '',
-                                    imageCredits: { name: '', url: '' },
-                                });
-                                setDestImagePreview(null);
-                                setShowDestinationModal(true);
-                            }}
-                            className="px-6 py-2 bg-desert-gold hover:bg-desert-gold/90 text-white font-bold rounded-lg transition-all"
-                        >
-                            {t('Add New Destination', 'नया स्थान जोड़ें')}
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {destinations.map((dest) => (
-                            <div key={dest.id} className="bg-white/10 backdrop-blur-lg rounded-xl overflow-hidden border border-white/20">
-                                <div className="aspect-video relative">
-                                    <img
-                                        src={dest.coverImage || '/images/jaipur-hawa-mahal.webp'}
-                                        alt={dest.name_en}
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-[10px] text-white font-bold uppercase">
-                                        {dest.blogCount} Blogs
-                                    </div>
-                                </div>
-                                <div className="p-4">
-                                    <h3 className="text-white font-bold text-lg mb-1">{dest.name_en}</h3>
-                                    <p className="text-gray-400 text-xs mb-4 line-clamp-2">{dest.tagline_en}</p>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => openEditDestination(dest)}
-                                            className="flex-1 py-2 bg-white/20 hover:bg-white/30 text-white text-sm font-semibold rounded-lg transition-all"
-                                        >
-                                            {t('Edit', 'संपादित करें')}
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteDestination(dest.id)}
-                                            disabled={processing === dest.id}
-                                            className="flex-1 py-2 bg-red-600/20 hover:bg-red-600/40 text-red-400 text-sm font-semibold rounded-lg transition-all disabled:opacity-50"
-                                        >
-                                            {t('Delete', 'हटाएं')}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {/* Product Modal */}
-            {showProductModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4">
-                    <div className="bg-slate-900 border border-white/20 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-white">
-                                {editingProduct ? t('Edit Product', 'उत्पाद संपादित करें') : t('Add New Product', 'नया उत्पाद जोड़ें')}
-                            </h2>
-                            <button onClick={() => setShowProductModal(false)} className="text-gray-400 hover:text-white">✕</button>
-                        </div>
-
-                        <form onSubmit={handleProductSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Product Name</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={productForm.name}
-                                    onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold"
-                                    placeholder="e.g. Rajasthan Travel Guide"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Price</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={productForm.price}
-                                        onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold"
-                                        placeholder="e.g. $19.99 or ₹999"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Product Image</label>
-                                    <input
-                                        ref={productImageInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={(e) => {
-                                            const file = e.target.files?.[0];
-                                            if (file) handleProductImageUpload(file);
-                                        }}
-                                    />
-                                    {imagePreview || productForm.imageUrl ? (
-                                        <div className="relative group">
-                                            <img
-                                                src={imagePreview || productForm.imageUrl}
-                                                alt="Product preview"
-                                                className="w-full h-40 object-cover rounded-lg border border-white/10"
-                                            />
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setImagePreview(null);
-                                                    setProductForm(prev => ({ ...prev, imageUrl: '' }));
-                                                    if (productImageInputRef.current) productImageInputRef.current.value = '';
-                                                }}
-                                                className="absolute top-2 right-2 w-8 h-8 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                ✕
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => productImageInputRef.current?.click()}
-                                                className="absolute bottom-2 right-2 px-3 py-1 bg-white/20 hover:bg-white/30 text-white text-xs font-medium rounded-lg backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                            >
-                                                Change Image
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() => productImageInputRef.current?.click()}
-                                            disabled={imageUploading}
-                                            className="w-full h-40 bg-white/5 border-2 border-dashed border-white/20 hover:border-desert-gold/50 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-desert-gold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                            onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-desert-gold', 'bg-desert-gold/5'); }}
-                                            onDragLeave={(e) => { e.currentTarget.classList.remove('border-desert-gold', 'bg-desert-gold/5'); }}
-                                            onDrop={(e) => {
-                                                e.preventDefault();
-                                                e.currentTarget.classList.remove('border-desert-gold', 'bg-desert-gold/5');
-                                                const file = e.dataTransfer.files?.[0];
-                                                if (file && file.type.startsWith('image/')) handleProductImageUpload(file);
-                                            }}
-                                        >
-                                            {imageUploading ? (
-                                                <>
-                                                    <div className="w-8 h-8 border-2 border-desert-gold/30 border-t-desert-gold rounded-full animate-spin" />
-                                                    <span className="text-sm">Uploading... {imageUploadProgress}%</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                    <span className="text-sm font-medium">Click or drag image here</span>
-                                                    <span className="text-xs text-gray-500">PNG, JPG, WEBP up to 20MB</span>
-                                                </>
-                                            )}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Affiliate Link</label>
-                                <input
-                                    type="url"
-                                    required
-                                    value={productForm.affiliateLink}
-                                    onChange={(e) => setProductForm({ ...productForm, affiliateLink: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold"
-                                    placeholder="https://amazon.com/..."
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Description</label>
-                                <textarea
-                                    value={productForm.description}
-                                    onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold min-h-[100px]"
-                                    placeholder="Brief product description..."
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-2">Destinations (Comma separated)</label>
-                                <input
-                                    type="text"
-                                    value={productForm.destinations.join(', ')}
-                                    onChange={(e) => setProductForm({
-                                        ...productForm,
-                                        destinations: e.target.value.split(',').map(s => s.trim()).filter(s => s !== '')
-                                    })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold"
-                                    placeholder="jaipur, udaipur, jaisalmer"
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="isActive"
-                                    checked={productForm.isActive}
-                                    onChange={(e) => setProductForm({ ...productForm, isActive: e.target.checked })}
-                                    className="w-4 h-4 bg-white/5 border border-white/10 rounded accent-desert-gold"
-                                />
-                                <label htmlFor="isActive" className="text-sm font-medium text-gray-400">Active (Visible to users)</label>
-                            </div>
-
-                            <div className="pt-6 flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowProductModal(false)}
-                                    className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={processing === 'product-form'}
-                                    className="flex-1 py-3 bg-desert-gold hover:bg-desert-gold/90 text-white font-bold rounded-lg transition-all disabled:opacity-50"
-                                >
-                                    {processing === 'product-form' ? 'Saving...' : (editingProduct ? 'Update Product' : 'Create Product')}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Destination Modal */}
-            {showDestinationModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4">
-                    <div className="bg-slate-900 border border-white/20 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold text-white">
-                                {editingDestination ? t('Edit Destination', 'स्थान संपादित करें') : t('Add New Destination', 'नया स्थान जोड़ें')}
-                            </h2>
-                            <button onClick={() => setShowDestinationModal(false)} className="text-gray-400 hover:text-white">✕</button>
-                        </div>
-
-                        <form onSubmit={handleDestinationSubmit} className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">ID / Slug (e.g. jaipur)</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        disabled={!!editingDestination}
-                                        value={destinationForm.id}
-                                        onChange={(e) => setDestinationForm({ ...destinationForm, id: e.target.value.toLowerCase() })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold disabled:opacity-50"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Best Time to Visit</label>
-                                    <input
-                                        type="text"
-                                        value={destinationForm.bestTime}
-                                        onChange={(e) => setDestinationForm({ ...destinationForm, bestTime: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold"
-                                        placeholder="e.g. October to March"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Name (English)</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={destinationForm.name_en}
-                                        onChange={(e) => setDestinationForm({ ...destinationForm, name_en: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Name (Hindi)</label>
-                                    <input
-                                        type="text"
-                                        value={destinationForm.name_hi}
-                                        onChange={(e) => setDestinationForm({ ...destinationForm, name_hi: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Tagline (English)</label>
-                                    <input
-                                        type="text"
-                                        value={destinationForm.tagline_en}
-                                        onChange={(e) => setDestinationForm({ ...destinationForm, tagline_en: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1">Tagline (Hindi)</label>
-                                    <input
-                                        type="text"
-                                        value={destinationForm.tagline_hi}
-                                        onChange={(e) => setDestinationForm({ ...destinationForm, tagline_hi: e.target.value })}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Description (English)</label>
-                                <textarea
-                                    required
-                                    value={destinationForm.description_en}
-                                    onChange={(e) => setDestinationForm({ ...destinationForm, description_en: e.target.value })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold min-h-[100px]"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Cover Image</label>
-                                <input
-                                    ref={destinationImageInputRef}
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) handleDestinationImageUpload(file);
-                                    }}
-                                />
-                                {destImagePreview || destinationForm.coverImage ? (
-                                    <div className="relative group">
-                                        <img
-                                            src={destImagePreview || destinationForm.coverImage}
-                                            alt="Destination cover preview"
-                                            className="w-full h-48 object-cover rounded-lg border border-white/10"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                setDestImagePreview(null);
-                                                setDestinationForm(prev => ({ ...prev, coverImage: '' }));
-                                                if (destinationImageInputRef.current) destinationImageInputRef.current.value = '';
-                                            }}
-                                            className="absolute top-2 right-2 w-8 h-8 bg-red-600/80 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            ✕
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => destinationImageInputRef.current?.click()}
-                                            disabled={destImageUploading}
-                                            className="absolute bottom-2 right-2 px-3 py-1 bg-white/20 hover:bg-white/30 text-white text-xs font-medium rounded-lg backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
-                                        >
-                                            {destImageUploading ? `Uploading... ${destImageUploadProgress}%` : 'Change Image'}
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={() => destinationImageInputRef.current?.click()}
-                                        disabled={destImageUploading}
-                                        className="w-full h-48 bg-white/5 border-2 border-dashed border-white/20 hover:border-desert-gold/50 rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-desert-gold transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                        onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('border-desert-gold', 'bg-desert-gold/5'); }}
-                                        onDragLeave={(e) => { e.currentTarget.classList.remove('border-desert-gold', 'bg-desert-gold/5'); }}
-                                        onDrop={(e) => {
-                                            e.preventDefault();
-                                            e.currentTarget.classList.remove('border-desert-gold', 'bg-desert-gold/5');
-                                            const file = e.dataTransfer.files?.[0];
-                                            if (file && file.type.startsWith('image/')) handleDestinationImageUpload(file);
-                                        }}
-                                    >
-                                        {destImageUploading ? (
-                                            <>
-                                                <div className="w-8 h-8 border-2 border-desert-gold/30 border-t-desert-gold rounded-full animate-spin" />
-                                                <span className="text-sm">Uploading... {destImageUploadProgress}%</span>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                <span className="text-sm font-medium">Click or drag image here</span>
-                                                <span className="text-xs text-gray-500">PNG, JPG, WEBP up to 20MB</span>
-                                            </>
-                                        )}
-                                    </button>
-                                )}
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-400 mb-1">Attractions (Comma separated)</label>
-                                <input
-                                    type="text"
-                                    value={destinationForm.attractions.join(', ')}
-                                    onChange={(e) => setDestinationForm({
-                                        ...destinationForm,
-                                        attractions: e.target.value.split(',').map(s => s.trim()).filter(s => s !== '')
-                                    })}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-desert-gold"
-                                    placeholder="Hawa Mahal, City Palace, Amer Fort"
-                                />
-                            </div>
-
-                            <div className="pt-6 flex gap-3">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowDestinationModal(false)}
-                                    className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white font-bold rounded-lg transition-all"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={processing === 'destination-form'}
-                                    className="flex-1 py-3 bg-desert-gold hover:bg-desert-gold/90 text-white font-bold rounded-lg transition-all disabled:opacity-50"
-                                >
-                                    {processing === 'destination-form' ? 'Saving...' : (editingDestination ? 'Update Destination' : 'Create Destination')}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-            {mainTab === 'database' && (
-                <div className="max-w-7xl mx-auto px-4 py-8">
-                    <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 border border-white/20 shadow-2xl">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                            <div>
-                                <h2 className="text-2xl font-bold text-white mb-2">
-                                    {t('Database Synchronization', 'डेटाबेस सिंक्रनाइज़ेशन')}
-                                </h2>
-                                <p className="text-gray-300">
-                                    {t(
-                                        'Reconcile data between Neon (Master) and Supabase (Slave) databases.',
-                                        'नियॉन (मास्टर) और सुपाबेस (स्लेव) डेटाबेस के बीच डेटा का मिलान करें।'
-                                    )}
-                                </p>
-                            </div>
-                            <button
-                                onClick={async () => {
-                                    setIsSyncing(true);
-                                    setSyncError(null);
-                                    try {
-                                        const res = await triggerReconciliationAction();
-                                        if (res.success) {
-                                            setSyncResults(res.results);
-                                        } else {
-                                            setSyncError(res.error || 'Unknown error occurred');
-                                        }
-                                    } catch (err: any) {
-                                        setSyncError(err.message);
-                                    } finally {
-                                        setIsSyncing(false);
-                                    }
-                                }}
-                                disabled={isSyncing}
-                                className={`px-8 py-4 bg-gradient-to-r from-desert-gold to-deep-maroon text-white font-bold rounded-2xl shadow-lg transition-all flex items-center gap-3 ${isSyncing ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105 active:scale-95'
-                                    }`}
-                            >
-                                {isSyncing ? (
-                                    <>
-                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        {t('Syncing...', 'सिंक किया जा रहा है...')}
-                                    </>
-                                ) : (
-                                    <>
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                        </svg>
-                                        {t('Run Manual Reconciliation', 'मैनुअल मिलान चलाएँ')}
-                                    </>
-                                )}
-                            </button>
-                            <button
-                                onClick={async () => {
-                                    const { debugFailingBlogAction } = await import('@/lib/actions/db-sync');
-                                    const result = await debugFailingBlogAction();
-                                    alert(JSON.stringify(result, null, 2));
-                                }}
-                                className="text-xs text-white/30 hover:text-white/60 transition-colors uppercase tracking-[0.2em] mt-2 block w-full text-center"
-                            >
-                                [ Debug Sync Failure Reason ]
-                            </button>
-                        </div>
-
-                        {syncError && (
-                            <div className="bg-red-500/20 border border-red-500/30 text-red-200 p-4 rounded-xl mb-6">
-                                <p className="font-bold mb-1">{t('Error', 'त्रुटि')}</p>
-                                <p>{syncError}</p>
-                            </div>
-                        )}
-
-                        {syncResults.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {syncResults.map((result) => (
-                                    <div
-                                        key={result.table}
-                                        className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all"
-                                    >
-                                        <div className="flex items-center justify-between mb-4">
-                                            <h3 className="text-lg font-bold text-white capitalize">
-                                                {result.table}
-                                            </h3>
-                                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${result.status === 'success' ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'
-                                                }`}>
-                                                {result.status.toUpperCase()}
-                                            </span>
-                                        </div>
-                                        <div className="space-y-2 text-sm">
-                                            <div className="flex justify-between text-gray-300">
-                                                <span>{t('Rows Synced', 'सिंक की गई पंक्तियाँ')}</span>
-                                                <span className="font-mono text-white">{result.synced}</span>
-                                            </div>
-                                            <div className="flex justify-between text-gray-300">
-                                                <span>{t('Failed', 'विफल')}</span>
-                                                <span className={`font-mono ${result.failed > 0 ? 'text-red-400' : 'text-gray-400'}`}>
-                                                    {result.failed}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <p className="mt-4 text-xs text-gray-400 italic">
-                                            {result.message}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {!isSyncing && syncResults.length === 0 && !syncError && (
-                            <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-3xl">
-                                <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-white font-bold mb-1">
-                                    {t('No history available', 'कोई इतिहास उपलब्ध नहीं है')}
-                                </h3>
-                                <p className="text-gray-400 text-sm">
-                                    {t('Click the button above to start a manual sync.', 'मैनुअल सिंक शुरू करने के लिए ऊपर दिए गए बटन पर क्लिक करें।')}
-                                </p>
-                            </div>
                         )}
                     </div>
                 </div>

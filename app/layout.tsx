@@ -10,11 +10,12 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SessionTimeout from '@/components/SessionTimeout';
 import AuthProvider from '@/components/AuthProvider';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 
 export const metadata: Metadata = {
     title: {
-        default: 'VisionGuard - Travel Stories from the Land of Kings',
+        default: 'VisionGuard - CCTV Cameras & Home Security',
         template: '%s | VisionGuard',
     },
     metadataBase: new URL('https://www.VisionGuard.com'),
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
         canonical: './',
     },
     description:
-        'VisionGuard - Your gateway to Rajasthan travel stories, destination guides, and insider tips. Discover Jaipur, Udaipur, Jaisalmer, Jodhpur, and more.',
+        'VisionGuard is your gateway to CCTV cameras, smart home security, and home surveillance systems. Compare products and read expert buying guides.',
 
     authors: [{ name: 'VisionGuard' }],
     openGraph: {
@@ -30,9 +31,9 @@ export const metadata: Metadata = {
         locale: 'en_IN',
         url: '/',
         siteName: 'VisionGuard',
-        title: 'VisionGuard - Travel Stories from the Land of Kings',
+        title: 'VisionGuard - CCTV Cameras & Home Security',
         description:
-            'Explore Rajasthan through travel stories, destination guides, and insider tips. Discover the magic of Jaipur, Udaipur, and beyond.',
+            'CCTV cameras, doorbell systems, and smart home security guides. Compare features, read reviews, and check affiliate pricing.',
         images: [
             {
                 url: '/VisionGuard_logo.webp',
@@ -46,9 +47,9 @@ export const metadata: Metadata = {
         card: 'summary_large_image',
         site: '@VisionGuard',
         creator: '@VisionGuard',
-        title: 'VisionGuard - Travel Stories from the Land of Kings',
+        title: 'VisionGuard - CCTV Cameras & Home Security',
         description:
-            'Explore Rajasthan through travel stories, destination guides, and insider tips.',
+            'CCTV cameras and home security buying guides. Compare features and check prices via affiliate links.',
         images: ['/VisionGuard_logo.webp'],
     },
     robots: {
@@ -64,9 +65,9 @@ export const metadata: Metadata = {
     other: {
         'p:domain_verify': '8babaaa14408702493a829fbe247adda',
         // GEO: AI content classification hints for generative engines
-        'ai.content.type': 'travel blog',
-        'ai.content.region': 'Rajasthan, India',
-        'ai.content.topics': 'travel, tourism, destinations, culture, heritage, desert safari',
+        'ai.content.type': 'home security blog',
+        'ai.content.region': 'India',
+        'ai.content.topics': 'cctv, home security, surveillance, smart home, doorbell cameras, ai detection, night vision',
     },
 };
 
@@ -76,7 +77,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="en" className={outfit.variable}>
+        <html lang="en" className={`${outfit.variable} dark`}>
 
             <head>
                 {/*
@@ -94,21 +95,23 @@ export default function RootLayout({
                 <link
                     rel="alternate"
                     type="application/rss+xml"
-                    title="VisionGuard - Rajasthan Travel Stories"
+                    title="VisionGuard - CCTV & Home Security Guides"
                     href="https://www.VisionGuard.com/feed.xml"
                 />
             </head>
-            <body className="bg-gray-50 font-sans">
-                <AuthProvider>
-                    <LanguageProvider>
-                        <LoginModalProvider>
-                            <SessionTimeout />
-                            <Navbar />
-                            <main>{children}</main>
-                            <Footer />
-                        </LoginModalProvider>
-                    </LanguageProvider>
-                </AuthProvider>
+            <body className="bg-gray-50 dark:bg-[#0a0e17] text-gray-900 dark:text-gray-100 font-sans">
+                <ThemeProvider>
+                    <AuthProvider>
+                        <LanguageProvider>
+                            <LoginModalProvider>
+                                <SessionTimeout />
+                                <Navbar />
+                                <main>{children}</main>
+                                <Footer />
+                            </LoginModalProvider>
+                        </LanguageProvider>
+                    </AuthProvider>
+                </ThemeProvider>
 
                 {/* GA4 — afterInteractive scripts belong inside the React tree (body), not <head> */}
                 <Script
@@ -134,16 +137,15 @@ export default function RootLayout({
                             name: 'VisionGuard',
                             url: 'https://www.VisionGuard.com',
                             logo: 'https://www.VisionGuard.com/VisionGuard_logo.webp',
-                            description: 'Your gateway to Rajasthan travel stories, destination guides, and insider tips.',
+                            description: 'Your gateway to CCTV cameras, smart home security, and home surveillance buying guides.',
                             foundingDate: '2024',
                             knowsAbout: [
-                                'Rajasthan tourism', 'Thar Desert travel', 'India heritage tourism',
-                                'Jaipur travel guide', 'Udaipur travel guide', 'Jaisalmer travel guide',
-                                'Jodhpur travel guide', 'Desert safari India', 'Rajasthan culture and heritage',
+                                'CCTV cameras', 'home security systems', 'surveillance', 'smart home alerts', 'AI detection',
+                                'night vision security', 'doorbell cameras', 'remote monitoring', 'smart home security'
                             ],
                             areaServed: {
                                 '@type': 'State',
-                                name: 'Rajasthan',
+                                name: 'India',
                                 containedInPlace: { '@type': 'Country', name: 'India' },
                             },
                             sameAs: ['https://x.com/VisionGuard', 'https://www.instagram.com/VisionGuardinfo/'],
@@ -165,7 +167,7 @@ export default function RootLayout({
                             '@type': 'WebSite',
                             name: 'VisionGuard',
                             url: 'https://www.VisionGuard.com',
-                            description: 'Rajasthan travel stories, destination guides, desert safari tips, and cultural insights.',
+                            description: 'CCTV camera buying guides, smart home security tips, and product reviews for surveillance systems.',
                             inLanguage: 'en-IN',
                             potentialAction: {
                                 '@type': 'SearchAction',

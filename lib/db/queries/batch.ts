@@ -8,7 +8,7 @@
  * the old approach of fetching all rows and counting in JS).
  */
 
-import { db } from '@/lib/db';
+import { db } from '@/lib/db/router';
 import { isUuid } from './interactions';
 
 /**

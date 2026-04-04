@@ -10,7 +10,7 @@
  * - Counting companions
  */
 
-import { db } from '@/lib/db';
+import { db } from '@/lib/db/router';
 
 // ─── Types ──────────────────────────────────────────────────────
 

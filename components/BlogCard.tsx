@@ -23,7 +23,7 @@ export default function BlogCard({ blog, priority = false }: BlogCardProps) {
     );
 
     return (
-        <div className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 relative flex flex-col h-full border border-gray-100">
+        <div className="group bg-[#0a0e17] rounded-2xl overflow-hidden shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:shadow-[0_0_25px_rgba(0,212,255,0.15)] transition-all duration-500 relative flex flex-col h-full border border-[#1f2937] hover:border-[#00d4ff]/30">
             {/* Main Navigation Link (Absolute overlay excluding bottom bar) */}
             <Link
                 href={`/blogs/${blog.slug || blog.id}/`}
@@ -44,24 +44,24 @@ export default function BlogCard({ blog, priority = false }: BlogCardProps) {
                         decoding="async"
                     />
                     <div className="absolute top-4 left-4">
-                        <span className="px-3 py-1 bg-white/90 backdrop-blur-sm text-royal-blue text-[10px] font-bold uppercase rounded-full shadow-sm">
+                        <span className="px-3 py-1 bg-[#00d4ff]/20 backdrop-blur-md border border-[#00d4ff]/30 text-[#00d4ff] text-[10px] font-bold uppercase rounded-full shadow-[0_0_10px_rgba(0,212,255,0.2)]">
                             {blog.category}
                         </span>
                     </div>
                 </div>
 
                 <div className="p-5 flex-1 flex flex-col">
-                    <div className="flex items-center gap-2 text-gray-400 text-xs mb-3">
+                    <div className="flex items-center gap-2 text-[#8fa0ba] text-xs mb-3">
                         <span>{date}</span>
                         <span>•</span>
                         <span>{blog.readTime || '5 min'}</span>
                     </div>
 
-                    <h3 className="text-xl font-bold mb-3 text-gray-900 line-clamp-2 leading-tight group-hover:text-royal-blue transition-colors">
+                    <h3 className="text-xl font-bold mb-3 text-white line-clamp-2 leading-tight group-hover:text-[#00d4ff] transition-colors drop-shadow-sm">
                         {title}
                     </h3>
 
-                    <p className="text-gray-600 text-sm line-clamp-3 mb-4 leading-relaxed">
+                    <p className="text-[#8fa0ba] text-sm line-clamp-3 mb-4 leading-relaxed font-light">
                         {excerpt}
                     </p>
                 </div>
@@ -69,11 +69,11 @@ export default function BlogCard({ blog, priority = false }: BlogCardProps) {
 
             {/* Interaction Bar (Bottom - Clickable) */}
             <div
-                className="relative z-20 px-5 pt-0 pb-5 flex items-center justify-between mt-auto border-t border-gray-50 bg-white pointer-events-auto"
+                className="relative z-20 px-5 pt-0 pb-5 flex items-center justify-between mt-auto border-t border-[#1f2937]/50 pt-4 pointer-events-auto"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 border border-gray-200">
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-[#111827] border border-[#1f2937]">
                         {blog.author.avatar ? (
                             <img
                                 src={blog.author.avatar}
@@ -84,12 +84,12 @@ export default function BlogCard({ blog, priority = false }: BlogCardProps) {
                                 loading="lazy"
                             />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-xs font-bold text-gray-400">
+                            <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[#8fa0ba]">
                                 {blog.author.name.charAt(0)}
                             </div>
                         )}
                     </div>
-                    <span className="font-bold text-gray-800 text-xs">{blog.author.name}</span>
+                    <span className="font-bold text-gray-300 text-xs">{blog.author.name}</span>
                 </div>
 
                 <div className="flex items-center gap-4">

@@ -13,6 +13,8 @@ import BackToTop from '@/components/BackToTop';
 import TableOfContents from '@/components/TableOfContents';
 import { TocHeading } from '@/lib/blog-utils';
 import CommentScroller from './CommentScroller';
+import ComparisonTable from '@/components/ComparisonTable';
+import type { AffiliateProduct } from '@/lib/db/queries/products';
 
 
 // Lazy load heavy below-the-fold components
@@ -41,10 +43,20 @@ interface BlogContentProps {
     initialContent: {
         en: { html: string; headings: TocHeading[] };
     };
+    pros?: string[];
+    cons?: string[];
+    comparisonProducts?: AffiliateProduct[];
 }
 
 
-export default function BlogContent({ blog, relatedBlogs = [], initialContent }: BlogContentProps) {
+export default function BlogContent({
+    blog,
+    relatedBlogs = [],
+    initialContent,
+    pros = [],
+    cons = [],
+    comparisonProducts = [],
+}: BlogContentProps) {
     const router = useRouter();
 
     // Intercept internal link clicks for fast SPA-like navigation
@@ -171,33 +183,36 @@ export default function BlogContent({ blog, relatedBlogs = [], initialContent }:
 
 
     return (
-        <article className="pt-28 pb-20 px-4 bg-gray-50/30 min-h-screen">
+        <article className="pt-28 pb-20 px-4 bg-transparent min-h-screen">
             {/* Suspense boundary for search params hook to prevent root bailout */}
             <Suspense fallback={null}>
                 <CommentScroller />
             </Suspense>
             {/* Top Breadcrumbs */}
             <div className="max-w-4xl mx-auto mb-6">
-                <nav className="flex items-center gap-2 text-sm text-gray-500 font-medium overflow-x-auto whitespace-nowrap pb-2 md:pb-0 no-scrollbar">
-                    <Link href="/" className="hover:text-royal-blue transition-colors flex items-center gap-1">
+                <nav className="flex items-center gap-2 text-sm text-[#8fa0ba] font-medium overflow-x-auto whitespace-nowrap pb-2 md:pb-0 no-scrollbar">
+                    <Link href="/" className="hover:text-[#00d4ff] transition-colors flex items-center gap-1">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
                         Home
                     </Link>
-                    <span className="text-gray-300">/</span>
-                    <Link href="/blogs/" className="hover:text-royal-blue transition-colors">Blogs</Link>
+                    <span className="text-[#3a4760]">/</span>
+                    <Link href="/blogs/" className="hover:text-[#00d4ff] transition-colors">Guides & Reviews</Link>
 
-                    <span className="text-gray-300">/</span>
-                    <Link href={`/destinations/${blog.destination}/`} className="hover:text-royal-blue transition-colors capitalize">
+                    <span className="text-[#3a4760]">/</span>
+                    <Link
+                        href={`/products/?category=${encodeURIComponent(blog.destination)}`}
+                        className="hover:text-[#00d4ff] transition-colors capitalize"
+                    >
                         {blog.destination}
                     </Link>
-                    <span className="text-gray-300">/</span>
-                    <span className="text-gray-400 truncate max-w-[200px]">{title}</span>
+                    <span className="text-[#3a4760]">/</span>
+                    <span className="text-white truncate max-w-[200px]">{title}</span>
                 </nav>
             </div>
 
-            <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl shadow-gray-200/50 overflow-hidden border border-gray-100">
+            <div className="max-w-4xl mx-auto bg-[#0a0e17] rounded-3xl shadow-[0_0_40px_rgba(0,0,0,0.5)] overflow-hidden border border-[#1f2937]">
                 {/* Cover Image */}
                 <div className="h-[300px] md:h-[500px] relative">
                     <Image
@@ -210,7 +225,7 @@ export default function BlogContent({ blog, relatedBlogs = [], initialContent }:
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                     <div className="absolute bottom-0 left-0 p-6 md:p-12 text-white w-full">
-                        <span className="inline-block px-4 py-1 bg-desert-gold text-white text-[10px] md:text-xs font-bold uppercase rounded-full mb-4 shadow-lg">
+                        <span className="inline-block px-4 py-1 bg-gradient-to-r from-[#00d4ff] to-[#10b981] text-[#0a0e17] text-[10px] md:text-xs font-bold uppercase rounded-full mb-4 shadow-lg">
                             {blog.category}
                         </span>
                         <h1 className="text-2xl md:text-5xl font-bold mb-4 leading-tight font-outfit drop-shadow-md">{title}</h1>
@@ -248,7 +263,7 @@ export default function BlogContent({ blog, relatedBlogs = [], initialContent }:
                     </div>
                 </div>
 
-                <div className="bg-gray-50 border-b border-gray-100 px-8 py-4 flex items-center justify-between">
+                <div className="bg-[#060a12] border-b border-[#1f2937] px-8 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-6">
                         <LikeButton blogId={blog.id} />
                         <CommentButton blogId={blog.id} slug={blog.slug} />
@@ -265,10 +280,10 @@ export default function BlogContent({ blog, relatedBlogs = [], initialContent }:
 
                 <div className="p-8 md:p-12">
                     {/* Author & Interactions */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-8 border-b border-gray-100">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 pb-8 border-b border-[#1f2937]">
                         {blog.author.slug ? (
                             <Link href={`/author/${blog.author.slug}/`} className="flex items-center gap-4 group">
-                                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-xl overflow-hidden ring-2 ring-transparent group-hover:ring-desert-gold transition-all">
+                                <div className="w-12 h-12 bg-[#111827] rounded-full flex items-center justify-center text-xl overflow-hidden ring-2 ring-transparent group-hover:ring-[#00d4ff] transition-all">
                                     {blog.author.avatar ? (
                                         <Image
                                             src={blog.author.avatar}
@@ -278,17 +293,17 @@ export default function BlogContent({ blog, relatedBlogs = [], initialContent }:
                                             className="rounded-full object-cover"
                                         />
                                     ) : (
-                                        <span>{blog.author.name.charAt(0)}</span>
+                                        <span className="text-[#8fa0ba]">{blog.author.name.charAt(0)}</span>
                                     )}
                                 </div>
                                 <div>
-                                    <p className="font-bold text-royal-blue group-hover:text-desert-gold transition-colors">{blog.author.name}</p>
-                                    <p className="text-sm text-gray-500">Traveler</p>
+                                    <p className="font-bold text-white group-hover:text-[#00d4ff] transition-colors">{blog.author.name}</p>
+                                    <p className="text-sm text-[#8fa0ba]">Security Expert</p>
                                 </div>
                             </Link>
                         ) : (
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-xl overflow-hidden">
+                                <div className="w-12 h-12 bg-[#111827] rounded-full flex items-center justify-center text-xl overflow-hidden">
                                     {blog.author.avatar ? (
                                         <Image
                                             src={blog.author.avatar}
@@ -298,18 +313,18 @@ export default function BlogContent({ blog, relatedBlogs = [], initialContent }:
                                             className="rounded-full object-cover"
                                         />
                                     ) : (
-                                        <span>{blog.author.name.charAt(0)}</span>
+                                        <span className="text-[#8fa0ba]">{blog.author.name.charAt(0)}</span>
                                     )}
                                 </div>
                                 <div>
-                                    <p className="font-bold text-royal-blue">{blog.author.name}</p>
-                                    <p className="text-sm text-gray-500">Traveler</p>
+                                    <p className="font-bold text-white">{blog.author.name}</p>
+                                    <p className="text-sm text-[#8fa0ba]">Security Expert</p>
                                 </div>
                             </div>
                         )}
 
                         {/* Likes Integration */}
-                        <div className="flex items-center bg-gray-50 px-4 py-2 rounded-full self-start md:self-auto">
+                        <div className="flex items-center bg-[#111827] border border-[#1f2937] px-4 py-2 rounded-full self-start md:self-auto">
                             <LikeButton blogId={blog.id} />
                         </div>
                     </div>
@@ -323,12 +338,61 @@ export default function BlogContent({ blog, relatedBlogs = [], initialContent }:
                         dangerouslySetInnerHTML={{ __html: content }}
                     />
 
+                    {/* Pros / Cons */}
+                    {(pros.length > 0 || cons.length > 0) && (
+                        <div className="mt-12 bg-[#0a0e17] border border-white/10 rounded-2xl p-6">
+                            <h2 className="text-2xl font-bold text-white mb-4">Pros & Cons</h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {pros.length > 0 && (
+                                    <div>
+                                        <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+                                            <span className="text-[#10b981]">✓</span> Pros
+                                        </h3>
+                                        <ul className="space-y-2">
+                                            {pros.map((item) => (
+                                                <li key={item} className="text-gray-200 text-sm leading-relaxed">
+                                                    <span className="mr-2 text-[#10b981]">•</span>
+                                                    {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                                {cons.length > 0 && (
+                                    <div>
+                                        <h3 className="text-white font-bold mb-3 flex items-center gap-2">
+                                            <span className="text-[#f59e0b]">!</span> Cons
+                                        </h3>
+                                        <ul className="space-y-2">
+                                            {cons.map((item) => (
+                                                <li key={item} className="text-gray-200 text-sm leading-relaxed">
+                                                    <span className="mr-2 text-[#f59e0b]">•</span>
+                                                    {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Comparison Table */}
+                    {comparisonProducts.length > 0 && (
+                        <div className="mt-12">
+                            <ComparisonTable
+                                title="Product Comparison (Based on Features)"
+                                products={comparisonProducts}
+                            />
+                        </div>
+                    )}
+
                     {/* Author Box — Rich E-E-A-T signals */}
                     <AuthorBox author={blog.author} />
 
 
                     {/* Affiliate Products */}
-                    <div className="mt-12 pt-8 border-t border-gray-100">
+                    <div className="mt-12 pt-8 border-t border-[#1f2937]">
                         <AffiliateProducts destination={blog.destination} limit={4} />
                     </div>
 
@@ -338,17 +402,17 @@ export default function BlogContent({ blog, relatedBlogs = [], initialContent }:
                     )}
 
                     {/* Comments Section */}
-                    <div id="comments-section">
+                    <div id="comments-section" className="mt-10 border-t border-[#1f2937] pt-8">
                         <CommentSection blogId={blog.id} />
                     </div>
                 </div>
 
                 {/* Back to Blogs / Bottom Breadcrumbs */}
-                <div className="px-8 pb-12 md:px-12 md:pb-16">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-12 border-t border-gray-100">
+                <div className="px-8 pb-12 md:px-12 md:pb-16 bg-[#060a12] border-t border-[#1f2937]">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-12">
                         <Link
-                            href={`/destinations/${blog.destination}/`}
-                            className="inline-flex items-center gap-2 text-royal-blue font-bold hover:text-desert-gold transition-colors capitalize"
+                            href={`/products/?category=${blog.destination}`}
+                            className="inline-flex items-center gap-2 text-[#00d4ff] font-bold hover:text-white transition-colors capitalize"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 15l-3-3m0 0l3-3m-3 3h8M3 12a9 9 0 1118 0 9 9 0 0118 0z" />
@@ -356,13 +420,12 @@ export default function BlogContent({ blog, relatedBlogs = [], initialContent }:
                             Explore more {blog.destination}
                         </Link>
 
-                        <nav className="flex items-center gap-2 text-xs text-gray-400 font-medium italic">
-                            <Link href="/" className="hover:text-royal-blue">Home</Link>
-                            <span>/</span>
-                            <Link href="/blogs/" className="hover:text-royal-blue">Blogs</Link>
-
-                            <span>/</span>
-                            <span className="capitalize">{blog.destination}</span>
+                        <nav className="flex items-center gap-2 text-xs text-[#8fa0ba] font-medium italic">
+                            <Link href="/" className="hover:text-[#00d4ff]">Home</Link>
+                            <span className="text-[#3a4760]">/</span>
+                            <Link href="/blogs/" className="hover:text-[#00d4ff]">Blogs</Link>
+                            <span className="text-[#3a4760]">/</span>
+                            <span className="capitalize text-white">{blog.destination}</span>
                         </nav>
                     </div>
                 </div>

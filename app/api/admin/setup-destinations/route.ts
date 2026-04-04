@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db } from '@/lib/db/router';
 import { destinations as staticDestinations } from '@/lib/data';
 import { getServerSession } from 'next-auth';
 import { isAdmin } from '@/lib/db/queries/admin';

@@ -7,7 +7,7 @@
  * Uses db.query() and NextAuth session instead of supabase.auth
  */
 
-import { db } from '@/lib/db';
+import { db } from '@/lib/db/router';
 
 /**
  * Check if a user has admin role.

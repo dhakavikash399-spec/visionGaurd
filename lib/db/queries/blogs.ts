@@ -10,7 +10,7 @@
  * with standard PostgreSQL SQL.
  */
 
-import { db } from '@/lib/db';
+import { db } from '@/lib/db/router';
 import { BlogPost } from '@/lib/data';
 import { submitToIndexNow } from '@/lib/indexnow';
 

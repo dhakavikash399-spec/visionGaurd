@@ -1,0 +1,61 @@
+﻿
+> visionguard@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.2.1 (Turbopack)
+- Environments: .env.local
+- Experiments (use with caution):
+  ┬╖ optimizePackageImports
+
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 11.6s
+  Running TypeScript ...
+node.exe : Failed to type 
+check.
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (F  
+  ailed to type check.:   
+ String) [], RemoteExc    
+eption
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+
+./app/api/blogs/submit/rou
+te.ts:58:13
+Type error: Expected 2 
+arguments, but got 1.
+
+  [90m56 |[0m           
+  revalidatePath([32m'/pr
+oducts/'[0m);
+  [90m57 |[0m           
+  revalidatePath([32m'/'
+[0m);
+[31m[1m>[0m [90m58 
+|[0m             revalida
+teTag([32m'blogs'[0m);
+  [90m   |[0m           
+  [31m[1m^[0m
+  [90m59 |[0m         } 
+[36mcatch[0m (revalErr) 
+{
+  [90m60 |[0m           
+  console.warn([32m'[subm
+it/route] Revalidation 
+error 
+(non-critical):'[0m, 
+revalErr);
+  [90m61 |[0m         }
+Next.js build worker 
+exited with code: 1 and 
+signal: null

@@ -16,7 +16,7 @@ export async function generateStaticParams() {
 }
 
 // Revalidate interval (configurable via env)
-export const revalidate = parseInt(process.env.REVALIDATE_SECONDS || '60', 10);
+export const revalidate = 60;
 
 type Props = {
     params: { slug: string };

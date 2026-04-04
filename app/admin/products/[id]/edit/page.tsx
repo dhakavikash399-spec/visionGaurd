@@ -13,7 +13,7 @@ export default function EditProductPage() {
 
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Security Cameras',
+    category: 'Indoor Cameras',
     description: '',
     price: '',
     original_price: '',
@@ -33,7 +33,7 @@ export default function EditProductPage() {
         const data = await res.json();
         setFormData({
           name:           data.name           || '',
-          category:       data.category       || 'Security Cameras',
+          category:       data.category       || 'Indoor Cameras',
           description:    data.description    || '',
           price:          data.price          || '',
           original_price: data.original_price || '',
@@ -137,12 +137,10 @@ export default function EditProductPage() {
               className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white outline-none focus:border-[#10b981] transition-colors"
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             >
-              <option>Security Cameras</option>
-              <option>Video Doorbells</option>
-              <option>NVR Systems</option>
-              <option>Smart Locks</option>
-              <option>Sensors &amp; Alarms</option>
-              <option>Accessories</option>
+              <option>Indoor Cameras</option>
+              <option>Outdoor Cameras</option>
+              <option>Doorbell Cameras</option>
+              <option>Wireless Systems</option>
             </select>
           </div>
         </div>

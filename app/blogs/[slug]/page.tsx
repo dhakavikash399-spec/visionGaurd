@@ -3,8 +3,8 @@ import * as cheerio from 'cheerio';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { BlogPost } from '@/lib/data';
-import { fetchBlogById, fetchRelatedBlogs } from '@/lib/db/queries';
-import { db } from '@/lib/db';
+import { fetchBlogById, fetchRelatedBlogs, fetchProducts } from '@/lib/db/queries';
+import { db } from '@/lib/db/router';
 import BlogContent from './BlogContent';
 import { extractHeadings, injectHeadingIds } from '@/lib/blog-utils';
 
@@ -16,6 +16,10 @@ const getBlogData = cache(async (id: string) => {
 
 const getRelatedBlogsData = cache(async (destination: string, currentId: string) => {
     return fetchRelatedBlogs(destination, currentId);
+});
+
+const getProductsData = cache(async () => {
+    return fetchProducts();
 });
 
 /**
@@ -211,6 +215,79 @@ function processContentForSEO(html: string): string {
     return processedHtml;
 }
 
+/**
+ * Extracts Pros/Cons content from the HTML and removes those blocks
+ * to avoid duplicated content when rendering custom Pros/Cons UI.
+ *
+ * Strategy:
+ * - Find a heading (h2/h3) containing "pros"/"advantages" or "cons"/"disadvantages"
+ * - Collect list items (li) and paragraphs after the heading until the next h2/h3
+ * - Remove the heading + collected nodes from the HTML
+ */
+function extractProsConsAndRemove(html: string): { cleanedHtml: string; pros: string[]; cons: string[] } {
+    if (!html) return { cleanedHtml: html, pros: [], cons: [] };
+
+    try {
+        const $ = cheerio.load(`<div id="__wrapper">${html}</div>`, null, false);
+
+        const collectBlock = (regex: RegExp) => {
+            const heading = $('#__wrapper')
+                .find('h2,h3')
+                .filter((_, el) => regex.test($(el).text().trim().toLowerCase()))
+                .first();
+
+            if (!heading.length) return { items: [] as string[], removed: false };
+
+            const items: string[] = [];
+            const startHeadingEl = heading[0];
+
+            let node = $(startHeadingEl).next();
+            while (node && node.length) {
+                const tag = node.prop('tagName')?.toLowerCase();
+                if (tag === 'h2' || tag === 'h3') break;
+
+                if (tag === 'ul' || tag === 'ol') {
+                    node.find('li').each((_, li) => {
+                        const text = $(li).text().trim();
+                        if (text) items.push(text);
+                    });
+                } else if (tag === 'li') {
+                    const text = node.text().trim();
+                    if (text) items.push(text);
+                } else if (tag === 'p') {
+                    const text = node.text().trim();
+                    if (text && text.length > 10) items.push(text);
+                } else if (tag === 'div' || tag === 'section') {
+                    // Best-effort: capture short paragraphs/lists inside blocks.
+                    node.find('li').each((_, li) => {
+                        const text = $(li).text().trim();
+                        if (text) items.push(text);
+                    });
+                    if (items.length === 0) {
+                        const text = node.text().trim();
+                        if (text && text.length > 20) items.push(text);
+                    }
+                }
+
+                const next = node.next();
+                node.remove();
+                node = next;
+            }
+
+            $(startHeadingEl).remove();
+            return { items, removed: true };
+        };
+
+        const prosBlock = collectBlock(/\bpros\b|advantages/i);
+        const consBlock = collectBlock(/\bcons\b|disadvantages|downsides|pitfalls/i);
+
+        const cleanedHtml = $('#__wrapper').html() || '';
+        return { cleanedHtml, pros: prosBlock.items, cons: consBlock.items };
+    } catch {
+        return { cleanedHtml: html, pros: [], cons: [] };
+    }
+}
+
 // Pre-generate all published blog pages at build time for faster indexing
 export async function generateStaticParams() {
     try {
@@ -227,28 +304,30 @@ export async function generateStaticParams() {
         }));
     } catch (error) {
         console.error('[BlogPage] generateStaticParams DB error:', error);
-        throw error;
+        // Fallback to dynamic rendering if DB is unavailable during build
+        return [];
     }
 }
 
 // Enable ISR - safety net for on-demand revalidation (configurable via env)
-export const revalidate = parseInt(process.env.REVALIDATE_SECONDS || '60', 10);
+export const revalidate = 60;
 export const dynamicParams = true;
 
 interface PageProps {
-    params: {
+    params: Promise<{
         slug: string;
-    }
+    }>
 }
 
 // Generate SEO metadata - Directly from DB (Best for SEO)
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     try {
-        const blog = await getBlogData(params.slug);
+        const { slug } = await params;
+        const blog = await getBlogData(slug);
 
         if (!blog) {
             return {
-                title: 'Travel Blog | VisionGuard',
+                title: 'Security Guide | VisionGuard',
             };
         }
 
@@ -283,12 +362,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
             },
         };
     } catch (err) {
-        return { title: 'Travel Blog | VisionGuard' };
+        return { title: 'Security Guide | VisionGuard' };
     }
 }
 
 export default async function BlogPage({ params }: PageProps) {
-    const { slug } = params;
+    const { slug } = await params;
 
     // Fetch blog data - Direct DB query (Server-Side)
     const blog = await getBlogData(slug);
@@ -299,6 +378,31 @@ export default async function BlogPage({ params }: PageProps) {
 
     // Fetch related blogs - Direct DB query
     const relatedBlogs = await getRelatedBlogsData(blog.destination, blog.id);
+
+    // Fetch products for comparison (based on the same tag used for recommendations)
+    const allProducts = await getProductsData();
+    const destinationTags = (blog.destination || '')
+        .split(',')
+        .map((d) => d.trim())
+        .filter(Boolean);
+    const destinationTagSet = new Set(destinationTags.map((d) => d.toLowerCase()));
+
+    const matchesDestination = (p: any) => {
+        const pCategory = p.category ? String(p.category).toLowerCase() : '';
+        const categoryMatch = destinationTagSet.has(pCategory);
+
+        const dests: string[] = Array.isArray(p.destinations) ? p.destinations : [];
+        const destMatch = dests.some((d) => destinationTagSet.has(String(d).toLowerCase()));
+
+        // If no destinations are configured on a product, keep it as a general candidate.
+        const isGeneral = dests.length === 0;
+
+        return categoryMatch || destMatch || isGeneral;
+    };
+
+    const comparisonProducts = allProducts
+        .filter(matchesDestination)
+        .slice(0, 3);
 
     // Calculate word count
     const plainText = (blog.content_en || '').replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -353,17 +457,18 @@ export default async function BlogPage({ params }: PageProps) {
         },
         inLanguage: 'en-IN',
         wordCount: wordCount,
-        articleSection: blog.category || 'Travel',
+        articleSection: blog.category || 'Security',
         ...(blog.destination ? {
             about: {
-                '@type': 'TouristDestination',
-                name: blog.destination.split(',')[0].trim().charAt(0).toUpperCase() + blog.destination.split(',')[0].trim().slice(1),
-                containedInPlace: {
-                    '@type': 'State',
-                    name: 'Rajasthan',
-                    containedInPlace: { '@type': 'Country', name: 'India' }
-                }
-            }
+                '@type': 'Service',
+                name:
+                    blog.destination
+                        .split(',')[0]
+                        .trim()
+                        .charAt(0)
+                        .toUpperCase() +
+                    blog.destination.split(',')[0].trim().slice(1),
+            },
         } : {}),
     };
 
@@ -374,12 +479,17 @@ export default async function BlogPage({ params }: PageProps) {
         '@type': 'BreadcrumbList',
         itemListElement: [
             { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://www.VisionGuard.com/' },
-            { '@type': 'ListItem', position: 2, name: 'Travel Blogs', item: 'https://www.VisionGuard.com/blogs/' },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Guides & Reviews',
+                item: 'https://www.VisionGuard.com/blogs/',
+            },
             {
                 '@type': 'ListItem',
                 position: 3,
                 name: destLabel,
-                item: `https://www.VisionGuard.com/destinations/${destName}/`
+                item: `https://www.VisionGuard.com/products/?category=${encodeURIComponent(destName)}`
             },
             {
                 '@type': 'ListItem',
@@ -410,8 +520,9 @@ export default async function BlogPage({ params }: PageProps) {
 
     // Process English — all H1s in content are converted to H2
     const { cleanedHtml: docEn } = extractAndFixH1s(rawContentEn);
-    const headingsEn = extractHeadings(docEn);
-    const htmlEn = processContentForSEO(injectHeadingIds(docEn, headingsEn));
+    const prosCons = extractProsConsAndRemove(docEn);
+    const headingsEn = extractHeadings(prosCons.cleanedHtml);
+    const htmlEn = processContentForSEO(injectHeadingIds(prosCons.cleanedHtml, headingsEn));
 
     // Strip raw content fields from the prop sent to the client.
     // They are already processed into htmlEn and sent as initialContent.
@@ -443,6 +554,9 @@ export default async function BlogPage({ params }: PageProps) {
             <BlogContent
                 blog={blogForClient as typeof blog}
                 relatedBlogs={relatedBlogs}
+                pros={prosCons.pros}
+                cons={prosCons.cons}
+                comparisonProducts={comparisonProducts}
                 initialContent={{
                     en: { html: htmlEn, headings: headingsEn },
                 }}

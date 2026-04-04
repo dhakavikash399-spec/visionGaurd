@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next'
-import { db } from '@/lib/db'
+import { db } from '@/lib/db/router'
 import { destinations } from '@/lib/data'
 
 export const revalidate = 3600 // Revalidate every hour

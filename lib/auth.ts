@@ -76,7 +76,7 @@ export const authOptions: NextAuthOptions = {
                     role: string;
                     image: string;
                 }>(
-                    'SELECT id, email, name, password_hash, role, image FROM users WHERE email = $1',
+                    'SELECT id, email, name, password AS password_hash, role, image FROM users WHERE email = $1',
                     [credentials.email]
                 );
 

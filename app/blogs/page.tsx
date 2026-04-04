@@ -4,37 +4,39 @@ import BlogsClient from './BlogsClient';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-    title: 'Travel Blogs | VisionGuard',
-    description: 'Read the latest travel stories, guides, and tips from Rajasthan. Explore diverse destinations and cultural insights.',
+    title: 'Guides & Reviews | VisionGuard',
+    description:
+        'Read the latest CCTV and home security buying guides, product reviews, and practical security tips.',
     alternates: {
         canonical: '/blogs/',
     },
     openGraph: {
-        title: 'Travel Blogs - Rajasthan Travel Stories | VisionGuard',
-        description: 'Discover Rajasthan through authentic travel stories and guides. From Jaipur to Jaisalmer, explore the land of kings.',
+        title: 'Guides & Reviews - CCTV & Home Security | VisionGuard',
+        description:
+            'Buying guides, product reviews, and security tips for CCTV cameras and smart home surveillance.',
         url: '/blogs/',
         siteName: 'VisionGuard',
         locale: 'en_IN',
         type: 'website',
         images: [
             {
-                url: '/images/rajasthan-desert-hero.webp',
+                url: '/VisionGuard_logo.webp',
                 width: 1200,
                 height: 630,
-                alt: 'VisionGuard Travel Blogs',
+                alt: 'VisionGuard Guides & Reviews',
             },
         ],
     },
     twitter: {
         card: 'summary_large_image',
-        title: 'Travel Blogs | VisionGuard',
-        description: 'Read the latest travel stories and guides from across Rajasthan.',
-        images: ['/images/rajasthan-desert-hero.webp'],
+        title: 'Guides & Reviews | VisionGuard',
+        description: 'CCTV and home security buying guides, reviews, and tips.',
+        images: ['/VisionGuard_logo.webp'],
     },
 };
 
 // Revalidate interval (configurable via env)
-export const revalidate = parseInt(process.env.REVALIDATE_SECONDS || '60', 10);
+export const revalidate = 60;
 
 export default async function BlogsPage() {
     // 1. Fetch data on the server
@@ -45,8 +47,8 @@ export default async function BlogsPage() {
     const itemListJsonLd = {
         '@context': 'https://schema.org',
         '@type': 'CollectionPage',
-        name: 'Travel Blogs | VisionGuard',
-        description: 'Read the latest travel stories, guides, and tips from Rajasthan.',
+        name: 'Guides & Reviews | VisionGuard',
+        description: 'CCTV and home security buying guides, product reviews, and practical tips.',
         url: 'https://www.VisionGuard.com/blogs/',
         mainEntity: {
             '@type': 'ItemList',
@@ -74,7 +76,7 @@ export default async function BlogsPage() {
             {
                 '@type': 'ListItem',
                 position: 2,
-                name: 'Travel Blogs',
+                name: 'Guides & Reviews',
                 item: 'https://www.VisionGuard.com/blogs/',
             },
         ],

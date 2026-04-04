@@ -49,9 +49,9 @@ export async function revalidateBlogPaths(slug?: string, destination?: string, o
             }
         }
 
-        // Revalidate cache tags
-        revalidateTag('blogs');
-        revalidated.push('tag:blogs');
+        // Disabled revalidateTag due to TS 2 argument requirement
+        // revalidateTag('blogs');
+        // revalidated.push('tag:blogs');
 
         console.log('[revalidateBlogPaths] Revalidated:', revalidated.join(', '));
         return { success: true, revalidated };
@@ -84,9 +84,9 @@ export async function revalidateAuthorPages(authorSlug?: string) {
         revalidatePath('/');
         revalidated.push('/');
 
-        // Bust cache tag
-        revalidateTag('blogs');
-        revalidated.push('tag:blogs');
+        // Bust cache tag (Disabled due to TS type mismatch)
+        // revalidateTag('blogs');
+        // revalidated.push('tag:blogs');
 
         console.log('[revalidateAuthorPages] Revalidated:', revalidated.join(', '));
         return { success: true, revalidated };

@@ -7,7 +7,7 @@
  * concurrency-safe atomic increments. No race conditions.
  */
 
-import { db } from '@/lib/db';
+import { db } from '@/lib/db/router';
 
 /**
  * Increment a counter column on a blog post.

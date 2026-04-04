@@ -36,34 +36,29 @@ export default function Navbar() {
     }, [mobileMenuOpen]);
 
     return (
-        <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-sm transition-all duration-300">
+        <nav ref={navRef} className="fixed top-0 left-0 right-0 z-50 bg-[#060a12]/95 backdrop-blur-md border-b border-[#00d4ff]/10 shadow-md transition-all duration-300">
             <div className="max-w-7xl mx-auto px-4 py-4 grid grid-cols-2 md:grid-cols-3 items-center">
                 {/* Logo Section - Left */}
                 <div className="flex justify-start">
                     <Link href="/" className="flex items-center gap-2">
                         <Image
-                            src="/logo-sm.webp"
+                            src="/VisionGuard_logo.webp"
                             alt="VisionGuard Logo"
                             width={48}
                             height={48}
                             className="h-12 w-auto rounded-full"
                         />
-                        <span className="text-xl font-bold text-royal-blue whitespace-nowrap">
+                        <span className="text-xl font-bold text-[#00d4ff] whitespace-nowrap">
                             VisionGuard
                         </span>
-
                     </Link>
                 </div>
 
                 {/* Nav Links - Center (Desktop) */}
                 <div className="hidden md:flex items-center justify-center gap-6">
-                    <Link href="/" className="font-medium text-gray-600 hover:text-royal-blue transition-colors">Home</Link>
-                    <Link href="/blogs/" className="font-medium text-gray-600 hover:text-royal-blue transition-colors">Blogs</Link>
-                    <Link href="/destinations/" className="font-medium text-gray-600 hover:text-royal-blue transition-colors">Destinations</Link>
-
-
-                    <Link href="/essentials/" className="font-medium text-gray-600 hover:text-royal-blue transition-colors">Essentials</Link>
-
+                    <Link href="/" className="font-medium text-gray-300 hover:text-[#00d4ff] transition-colors">Home</Link>
+                    <Link href="/blogs/" className="font-medium text-gray-300 hover:text-[#00d4ff] transition-colors">Guides</Link>
+                    <Link href="/products/" className="font-medium text-gray-300 hover:text-[#00d4ff] transition-colors">Cameras</Link>
                 </div>
 
                 {/* Actions Section - Right */}
@@ -107,10 +102,9 @@ export default function Navbar() {
 
                     <Link
                         href="/submit/"
-                        className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-desert-gold to-[#B8922F] text-white font-semibold rounded-lg shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all text-sm"
+                        className="hidden sm:inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#00d4ff] to-[#10b981] text-[#0a0e17] font-semibold rounded-lg shadow-md hover:shadow-[0_0_15px_rgba(0,212,255,0.3)] transition-all text-sm"
                     >
-                        Submit Blog
-
+                        Submit Guide
                     </Link>
 
                     {/* Mobile Menu Button */}
@@ -119,35 +113,26 @@ export default function Navbar() {
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label="Toggle navigation menu"
                     >
-                        <span className="w-6 h-0.5 bg-gray-700 transition-all"></span>
-                        <span className="w-6 h-0.5 bg-gray-700 transition-all"></span>
-                        <span className="w-6 h-0.5 bg-gray-700 transition-all"></span>
+                        <span className="w-6 h-0.5 bg-gray-300 transition-all"></span>
+                        <span className="w-6 h-0.5 bg-gray-300 transition-all"></span>
+                        <span className="w-6 h-0.5 bg-gray-300 transition-all"></span>
                     </button>
                 </div>
             </div>
 
             {/* Mobile Nav */}
             {mobileMenuOpen && (
-                <div className="md:hidden bg-white px-4 py-4 shadow-lg">
+                <div className="md:hidden bg-[#0a0e17] px-4 py-4 shadow-lg border-b border-[#00d4ff]/10">
                     <div className="flex flex-col gap-4">
                         <Link
                             href="/"
-                            className="text-lg py-2 px-4 rounded-lg hover:bg-gray-100"
+                            className="text-lg py-2 px-4 rounded-lg text-gray-200 hover:bg-[#111827]"
                             onClick={() => setMobileMenuOpen(false)}
                         >
                             Home
                         </Link>
-                        <Link href="/blogs/" className={`text-lg py-2 px-4 rounded-lg hover:bg-gray-100 ${pathname.startsWith('/blogs') ? 'text-royal-blue font-bold' : ''}`} onClick={() => setMobileMenuOpen(false)}>Blogs</Link>
-                        <Link href="/destinations/" className="text-lg py-2 px-4 rounded-lg hover:bg-gray-100" onClick={() => setMobileMenuOpen(false)}>Destinations</Link>
-
-
-                        <Link
-                            href="/essentials/"
-                            className="text-lg py-2 px-4 rounded-lg hover:bg-gray-100"
-                            onClick={() => setMobileMenuOpen(false)}
-                        >
-                            Essentials
-                        </Link>
+                        <Link href="/blogs/" className={`text-lg py-2 px-4 rounded-lg text-gray-200 hover:bg-[#111827] ${pathname.startsWith('/blogs') ? 'text-[#00d4ff] font-bold' : ''}`} onClick={() => setMobileMenuOpen(false)}>Guides</Link>
+                        <Link href="/products/" className="text-lg py-2 px-4 rounded-lg text-gray-200 hover:bg-[#111827]" onClick={() => setMobileMenuOpen(false)}>Cameras</Link>
 
                         {mounted && user && (
                             <>
@@ -176,11 +161,10 @@ export default function Navbar() {
 
                         <Link
                             href="/submit/"
-                            className="text-lg py-2 px-4 rounded-lg bg-desert-gold text-white text-center"
+                            className="text-lg py-2 px-4 rounded-lg bg-[#00d4ff] text-[#0a0e17] text-center font-bold"
                             onClick={() => setMobileMenuOpen(false)}
                         >
-                            Submit Blog
-
+                            Submit Guide
                         </Link>
                     </div>
                 </div>

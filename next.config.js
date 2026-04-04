@@ -29,8 +29,8 @@ const nextConfig = {
     // Enable compression
     compress: true,
 
-    // Optimize package imports - reduces bundle size by tree-shaking
     experimental: {
+        // Optimize package imports - reduces bundle size by tree-shaking
         optimizePackageImports: [
             '@tiptap/react',
             '@tiptap/extension-link',
@@ -44,9 +44,14 @@ const nextConfig = {
             '@tiptap/extension-placeholder',
             'react-dropzone',
         ],
-        // Treat pg as a server-only external package (prevents client bundling)
-        serverComponentsExternalPackages: ['pg'],
     },
+
+    // Treat pg as a server-only external package (prevents client bundling)
+    // Renamed from serverComponentsExternalPackages in Next.js 15+
+    serverExternalPackages: ['pg'],
+
+    // Silence Turbopack empty-config warning
+    turbopack: {},
 
     // Webpack config: prevent Node.js built-in modules from breaking client bundle
     // The pg driver (used by SupabaseProvider) depends on fs, net, tls, dns
@@ -69,15 +74,6 @@ const nextConfig = {
     // Enable React Strict Mode for better debugging
     reactStrictMode: true,
 
-    // Enable SWC minification for faster builds
-    swcMinify: true,
-
-    // Reduce bundle size by avoiding unnecessary polyfills
-    modularizeImports: {
-        '@tiptap/react': {
-            transform: '@tiptap/react/{{member}}',
-        },
-    },
 
     // Security and caching headers
     async headers() {
@@ -146,16 +142,9 @@ const nextConfig = {
                     },
                 ],
             },
-            {
-                // Cache JS and CSS with content hash for 1 year
-                source: '/_next/static/:path*',
-                headers: [
-                    {
-                        key: 'Cache-Control',
-                        value: 'public, max-age=31536000, immutable',
-                    },
-                ],
-            },
+            // NOTE: /_next/static Cache-Control is managed by Next.js internally.
+            // Setting it here causes a dev-mode warning and is overridden in production
+            // by the framework anyway, so the block has been intentionally removed.
         ];
     },
     trailingSlash: true,

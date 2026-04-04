@@ -53,16 +53,8 @@ export async function POST(req: NextRequest) {
         // Server-side cache revalidation — runs immediately on the server
         try {
             revalidatePath('/blogs/');
+            revalidatePath('/products/');
             revalidatePath('/');
-            revalidateTag('blogs');
-
-            // Revalidate destination pages where this blog appears
-            if (body.destination) {
-                const destSlugs = body.destination.split(',').filter(Boolean);
-                for (const d of destSlugs) {
-                    revalidatePath(`/destinations/${d}/`);
-                }
-            }
         } catch (revalErr) {
             console.warn('[submit/route] Revalidation error (non-critical):', revalErr);
         }

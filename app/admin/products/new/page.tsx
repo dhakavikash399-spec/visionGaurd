@@ -9,7 +9,7 @@ export default function NewProductPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
-    category: 'Security Cameras',
+    category: 'Indoor Cameras',
     description: '',
     price: '',
     original_price: '',
@@ -78,12 +78,10 @@ export default function NewProductPage() {
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
             >
-              <option>Security Cameras</option>
-              <option>Video Doorbells</option>
-              <option>NVR Systems</option>
-              <option>Smart Locks</option>
-              <option>Sensors & Alarms</option>
-              <option>Accessories</option>
+              <option>Indoor Cameras</option>
+              <option>Outdoor Cameras</option>
+              <option>Doorbell Cameras</option>
+              <option>Wireless Systems</option>
             </select>
           </div>
         </div>
